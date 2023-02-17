@@ -17,7 +17,7 @@ pub fn print_menu() {
         "Spotify".green().bold(),
         "backup tool!".bold()
     );
-    let logo_len: u16 = (logo.len() - ((9 * 3) + 8)).try_into().unwrap();
+    let logo_len: usize = logo.len() - ((9 * 3) + 8);
 
     let even_space = (0..((WIDTH - logo_len) / 2) - 1)
         .map(|_| ' ')
@@ -29,7 +29,7 @@ pub fn print_menu() {
     println!("={}=", underscore);
 
     let prompt = "1. Backup data from Spotify to your file system.";
-    let prompt_len: u16 = prompt.len().try_into().unwrap();
+    let prompt_len: usize = prompt.len();
 
     let space = (0..(WIDTH - (prompt_len + 9)))
         .map(|_| ' ')
@@ -38,7 +38,7 @@ pub fn print_menu() {
     println!("=\t{}{}=", prompt, space);
 
     let prompt = "2. Export data from your file system to a Spotify playlist.";
-    let prompt_len: u16 = prompt.len().try_into().unwrap();
+    let prompt_len: usize = prompt.len();
 
     let space = (0..(WIDTH - (prompt_len + 9)))
         .map(|_| ' ')
@@ -47,7 +47,7 @@ pub fn print_menu() {
     println!("=\t{}{}=", prompt, space);
 
     let prompt = "q. Quit.";
-    let prompt_len: u16 = prompt.len().try_into().unwrap();
+    let prompt_len: usize = prompt.len();
 
     let space = (0..(WIDTH - (prompt_len + 9)))
         .map(|_| ' ')
