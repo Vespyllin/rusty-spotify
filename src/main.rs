@@ -17,7 +17,12 @@ fn selection_menu_handler() {
 
         match menu::selection_menu::handle_input() {
             Choice::Exit => exit_proc(),
-            Choice::Submit => break,
+            Choice::Submit => {
+                // If at least 1 option is selected, allow the user to continue
+                if selection.iter().fold(false, |acc, v| acc || *v) {
+                    break;
+                }
+            }
             Choice::Default => {}
             Choice::Choice(x) => selection[x - 1] = !selection[x - 1],
         }

@@ -21,6 +21,8 @@ pub const FILLER_CHAR: char = '=';
 pub fn cls() {
     if cfg!(windows) {
         execute!(stdout(), cursor::MoveTo(0, 0)).unwrap();
+        print!("\x1B[2J\x1B[1;1H");
+        execute!(stdout(), cursor::MoveTo(0, 0)).unwrap();
     } else {
         print!("\x1B[2J\x1B[1;1H");
         stdout().flush().unwrap();
