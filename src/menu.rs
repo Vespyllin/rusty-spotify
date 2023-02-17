@@ -1,7 +1,8 @@
 use std::io::{stdout, Write};
 
 use crossterm::{
-    cursor, execute,
+    cursor, execute, queue,
+    style::Print,
     terminal::{disable_raw_mode, enable_raw_mode, is_raw_mode_enabled},
 };
 
@@ -18,14 +19,18 @@ pub enum Choice {
 pub const WIDTH: u16 = 85;
 pub const FILLER_CHAR: char = '=';
 
+pub fn reset_cursor() {
+    execute!(stdout(), cursor::MoveTo(0, 0)).unwrap();
+}
+
 pub fn cls() {
     if cfg!(windows) {
-        execute!(stdout(), cursor::MoveTo(0, 0)).unwrap();
-        print!("\x1B[2J\x1B[1;1H");
-        execute!(stdout(), cursor::MoveTo(0, 0)).unwrap();
-    } else {
-        print!("\x1B[2J\x1B[1;1H");
+        queue!(stdout(), cursor::MoveTo(0, 0)).unwrap();
+        queue!(stdout(), Print("\x1B[2J\x1B[1;1H")).unwrap();
+        queue!(stdout(), cursor::MoveTo(0, 0)).unwrap();
         stdout().flush().unwrap();
+    } else {
+        execute!(stdout(), Print("\x1B[2J\x1B[1;1H")).unwrap();
     }
 }
 

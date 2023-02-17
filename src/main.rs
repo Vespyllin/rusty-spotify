@@ -1,6 +1,6 @@
 use std::process::exit;
 
-use menu::{cls, hide_cursor, reset_terminal, Choice};
+use menu::{cls, hide_cursor, reset_cursor, reset_terminal, Choice};
 
 pub mod menu;
 
@@ -27,7 +27,7 @@ fn selection_menu_handler() {
             Choice::Choice(x) => selection[x - 1] = !selection[x - 1],
         }
 
-        cls();
+        reset_cursor();
     }
 }
 
@@ -50,7 +50,7 @@ fn main() {
             }
 
             Choice::Exit => exit_proc(),
-            Choice::Default => cls(),
+            Choice::Default => reset_cursor(),
             _ => todo!("Add submit to main menu"),
         }
     }
