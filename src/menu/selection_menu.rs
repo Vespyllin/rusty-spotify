@@ -14,20 +14,29 @@ pub fn print_menu(selected: &mut Vec<bool>) {
     println!("Select which option/s to export to JSON.\n");
 
     let options = vec![
-        "1.\tExport liked tracks.",
-        "2.\tExport saved playlists.",
-        "3.\tExport saved Albums.",
+        "Export liked tracks.",
+        "Export saved playlists.",
+        "Export saved Albums.",
     ];
 
-    for (i, option) in options.iter().enumerate() {
-        let highlight = *(selected.get(i).unwrap_or(&false));
+    assert_eq!(
+        selected.len(),
+        options.len(),
+        "Match selected vec len to options len."
+    );
 
-        if highlight {
-            println!("{}", option.on_dark_green())
-        } else {
-            println!("{}", option)
-        }
-    }
+    selected
+        .iter()
+        .zip(options.iter())
+        .enumerate()
+        .for_each(|(i, (highlight, option))| {
+            let num = format!("{}.", i + 1);
+            if *highlight {
+                println!("{}\t{}", num.on_dark_green(), option)
+            } else {
+                println!("{}\t{}", num, option)
+            }
+        });
 
     sep();
 }
@@ -79,6 +88,10 @@ pub fn handle_input() -> Choice {
         _ => {
             choice = Choice::Default;
         }
+    }
+
+    if cfg!(windows) {
+        _ = read().unwrap();
     }
 
     disable_raw_mode().unwrap();

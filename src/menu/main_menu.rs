@@ -62,6 +62,11 @@ pub fn handle_input() -> Choice {
     enable_raw_mode().unwrap();
     let choice: Choice;
 
+    if cfg!(windows) {
+        _ = read().unwrap();
+        _ = read().unwrap();
+    }
+
     match read().unwrap() {
         Event::Key(KeyEvent {
             code: KeyCode::Char('1'),
