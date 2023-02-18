@@ -17,43 +17,19 @@ pub fn print_menu() {
         "Spotify".green().bold(),
         "backup tool!".bold()
     );
-    let logo_len: usize = logo.len() - ((9 * 3) + 8);
 
+    let logo_len: usize = logo.len() - ((9 * 3) + 8);
     let even_space = (0..((WIDTH - logo_len) / 2) - 1)
         .map(|_| ' ')
         .collect::<String>();
 
-    println!("={}{}{}=", even_space, logo, even_space);
+    println!("{}{}\n", even_space, logo);
 
-    let underscore = (0..WIDTH - 2).map(|_| ' ').collect::<String>();
-    println!("={}=", underscore);
+    println!("1. Backup data from Spotify to your file system.");
 
-    let prompt = "1. Backup data from Spotify to your file system.";
-    let prompt_len: usize = prompt.len();
+    println!("2. Recover data from your file system to a Spotify playlist.");
 
-    let space = (0..(WIDTH - (prompt_len + 9)))
-        .map(|_| ' ')
-        .collect::<String>();
-
-    println!("=\t{}{}=", prompt, space);
-
-    let prompt = "2. Export data from your file system to a Spotify playlist.";
-    let prompt_len: usize = prompt.len();
-
-    let space = (0..(WIDTH - (prompt_len + 9)))
-        .map(|_| ' ')
-        .collect::<String>();
-
-    println!("=\t{}{}=", prompt, space);
-
-    let prompt = "q. Quit.";
-    let prompt_len: usize = prompt.len();
-
-    let space = (0..(WIDTH - (prompt_len + 9)))
-        .map(|_| ' ')
-        .collect::<String>();
-
-    println!("=\t{}{}=", prompt, space);
+    println!("q. Quit.");
 
     sep();
 }
@@ -61,11 +37,6 @@ pub fn print_menu() {
 pub fn handle_input() -> Choice {
     enable_raw_mode().unwrap();
     let choice: Choice;
-
-    if cfg!(windows) {
-        _ = read().unwrap();
-        _ = read().unwrap();
-    }
 
     match read().unwrap() {
         Event::Key(KeyEvent {
@@ -94,6 +65,11 @@ pub fn handle_input() -> Choice {
         }) => choice = Choice::Exit,
 
         _ => choice = Choice::Default,
+    }
+
+    // Double input workaround for Windows
+    if cfg!(windows) {
+        _ = read().unwrap();
     }
 
     disable_raw_mode().unwrap();
