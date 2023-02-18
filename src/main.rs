@@ -88,6 +88,7 @@ fn main() {
                 todo!("albums pipeline")
             }
         }
+
         Mode::Recover => todo!("TODO: Recover menu"),
     }
     cls();

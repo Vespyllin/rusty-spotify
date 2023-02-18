@@ -9,6 +9,14 @@ use crate::menu::{sep, WIDTH};
 use super::Choice;
 
 pub fn print_menu(selected: &mut Vec<bool>) {
+    let options = vec!["Liked tracks.", "Saved playlists.", "Saved Albums."];
+
+    assert_eq!(
+        selected.len(),
+        options.len(),
+        "Selection and options vectors are not of the same length."
+    );
+
     sep();
 
     let prompt = "Select which option/s to export to JSON.";
@@ -19,14 +27,6 @@ pub fn print_menu(selected: &mut Vec<bool>) {
         .collect::<String>();
 
     println!("{}{}\n", even_space, prompt.bold());
-
-    let options = vec!["Liked tracks.", "Saved playlists.", "Saved Albums."];
-
-    assert_eq!(
-        selected.len(),
-        options.len(),
-        "Match selected vec len to options len."
-    );
 
     selected
         .iter()
@@ -51,36 +51,25 @@ pub fn handle_input() -> Choice {
 
     match read().unwrap() {
         Event::Key(KeyEvent {
-            code: KeyCode::Char('1'),
-            ..
-        }) => {
-            choice = Choice::Choice(1);
-        }
-
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('2'),
-            ..
-        }) => {
-            choice = Choice::Choice(2);
-        }
-
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('3'),
-            ..
-        }) => {
-            choice = Choice::Choice(3);
-        }
-
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('q'),
-            ..
-        }) => choice = Choice::Exit,
-
-        Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
             ..
         }) => choice = Choice::Exit,
+
+        Event::Key(KeyEvent {
+            code: KeyCode::Char(x),
+            ..
+        }) => match x {
+            '1' => choice = Choice::Choice(1),
+
+            '2' => choice = Choice::Choice(2),
+
+            '3' => choice = Choice::Choice(3),
+
+            'q' => choice = Choice::Exit,
+
+            _ => choice = Choice::Default,
+        },
 
         Event::Key(KeyEvent {
             code: KeyCode::Enter,

@@ -40,29 +40,23 @@ pub fn handle_input() -> Choice {
 
     match read().unwrap() {
         Event::Key(KeyEvent {
-            code: KeyCode::Char('1'),
-            ..
-        }) => {
-            choice = Choice::Choice(1);
-        }
-
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('2'),
-            ..
-        }) => {
-            choice = Choice::Choice(2);
-        }
-
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('q'),
-            ..
-        }) => choice = Choice::Exit,
-
-        Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
             ..
         }) => choice = Choice::Exit,
+
+        Event::Key(KeyEvent {
+            code: KeyCode::Char(x),
+            ..
+        }) => match x {
+            '1' => choice = Choice::Choice(1),
+
+            '2' => choice = Choice::Choice(2),
+
+            'q' => choice = Choice::Exit,
+
+            _ => choice = Choice::Default,
+        },
 
         _ => choice = Choice::Default,
     }
