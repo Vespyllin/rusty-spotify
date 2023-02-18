@@ -16,8 +16,8 @@ pub enum Choice {
     Default,
 }
 
-pub const WIDTH: usize = 85;
-pub const FILLER_CHAR: char = '=';
+const WIDTH: usize = 85;
+const FILLER_CHAR: char = '=';
 
 pub fn reset_cursor() {
     execute!(stdout(), cursor::MoveTo(0, 0)).unwrap();

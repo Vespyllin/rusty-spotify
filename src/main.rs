@@ -1,9 +1,11 @@
 use std::process::exit;
 
 use crossterm::event::read;
+
 use menu::{cls, hide_cursor, reset_cursor, reset_terminal, Choice};
 
 pub mod menu;
+pub mod spotify_client;
 
 enum Mode {
     Backup,
@@ -77,6 +79,7 @@ fn main() {
     match backup_mode {
         Mode::Backup => {
             let selection = backup_selection_handler();
+            cls();
 
             if selection[0] {
                 todo!("liked pipeline")
