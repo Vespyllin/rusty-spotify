@@ -1,9 +1,16 @@
+use crossterm::event::read;
 use std::process::exit;
 
-use crossterm::event::read;
-
+use dump::dump_albums;
 use menu::{cls, hide_cursor, reset_cursor, reset_terminal, Choice};
 
+use crate::spotify_client::{
+    AlbumData, GetItemsResponse,
+    GetItemsResponse::{Failure, Success},
+    PlaylistData,
+};
+
+pub mod dump;
 pub mod menu;
 pub mod spotify_client;
 
@@ -42,7 +49,8 @@ fn backup_selection_handler() -> Vec<bool> {
     selection
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     hide_cursor();
     cls();
 
@@ -76,6 +84,7 @@ fn main() {
     }
     cls();
 
+    let access_token = "";
     match backup_mode {
         Mode::Backup => {
             let selection = backup_selection_handler();
@@ -85,14 +94,38 @@ fn main() {
                 todo!("liked pipeline")
             }
             if selection[1] {
-                todo!("playlist pipeline")
+                let res = spotify_client::library::get_playlists(access_token, 2, 0)
+                    .await
+                    .unwrap()
+                    .json::<GetItemsResponse<PlaylistData>>()
+                    .await
+                    .unwrap();
+
+                println!("Playlist: {:#?}", res);
             }
             if selection[2] {
-                todo!("albums pipeline")
+                let res = spotify_client::library::get_saved_albums(access_token, 50, 0)
+                    .await
+                    .unwrap();
+
+                // println!("{}", res.text().await.unwrap());
+                let thing = res.json::<GetItemsResponse<AlbumData>>().await.unwrap();
+
+                match thing {
+                    Success(data) => dump_albums(data),
+                    Failure(data) => {
+                        println!("Error {}: \"{}\"", data.error.status, data.error.message)
+                    }
+                    _ => println!("FAIL"),
+                }
+
+                // dump_albums(res);
+
+                // println!("Album: {:#?}", res);
             }
         }
 
         Mode::Recover => todo!("TODO: Recover menu"),
     }
-    cls();
+    // cls();
 }

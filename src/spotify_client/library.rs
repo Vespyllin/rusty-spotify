@@ -3,7 +3,7 @@
 
 use std::future::Future;
 
-use reqwest::{Error, Response};
+use reqwest::{Error, RequestBuilder, Response};
 
 use super::SPOTIFY_LIBRARY_URL;
 
@@ -19,7 +19,7 @@ pub async fn get_liked_tracks(
 
     return client
         .get(req_url)
-        .form(&params)
+        .query(&params)
         .header("Authorization", format!("Bearer {}", access_token))
         .header("Accept", "application/json")
         .header("Content-Type", "application/json")
@@ -39,7 +39,7 @@ pub async fn get_saved_albums(
 
     return client
         .get(req_url)
-        .form(&params)
+        .query(&params)
         .header("Authorization", format!("Bearer {}", access_token))
         .header("Accept", "application/json")
         .header("Content-Type", "application/json")
@@ -57,9 +57,11 @@ pub async fn get_playlists(
     let req_url = format!("{}/playlists", SPOTIFY_LIBRARY_URL);
     let params = [("limit", limit.to_string()), ("offset", offset.to_string())];
 
+    // println!("{:#?}", req.try_clone().unwrap().build().unwrap().url());
+
     return client
         .get(req_url)
-        .form(&params)
+        .query(&params)
         .header("Authorization", format!("Bearer {}", access_token))
         .header("Accept", "application/json")
         .header("Content-Type", "application/json")
