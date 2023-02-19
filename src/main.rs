@@ -95,7 +95,8 @@ async fn main() {
                         println!("{}", x);
                     }
                     Err(x) => {
-                        panic!("{}", x);
+                        println!("{}", x);
+                        reset_terminal();
                     }
                 }
             }
@@ -103,5 +104,5 @@ async fn main() {
 
         Mode::Recover => todo!("TODO: Recover menu"),
     }
-    // cls();
+    reset_terminal();
 }
