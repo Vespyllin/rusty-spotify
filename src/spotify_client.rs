@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 const SPOTIFY_LIBRARY_URL: &str = "https://api.spotify.com/v1/me";
 
@@ -144,5 +144,12 @@ pub struct ErrorData {
 pub enum GetItemsResponse<T> {
     Success(GetItemsData<T>),
     Failure(Error),
-    None,
+}
+
+#[derive(Serialize)]
+pub struct ReducedAlbumData {
+    pub id: String,
+    pub name: String,
+    pub artist: String,
+    pub added_at: String,
 }

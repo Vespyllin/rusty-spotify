@@ -1,16 +1,10 @@
+use backup::pull_albums_data;
 use crossterm::event::read;
 use std::process::exit;
 
-use dump::dump_albums;
 use menu::{cls, hide_cursor, reset_cursor, reset_terminal, Choice};
 
-use crate::spotify_client::{
-    AlbumData, GetItemsResponse,
-    GetItemsResponse::{Failure, Success},
-    PlaylistData,
-};
-
-pub mod dump;
+pub mod backup;
 pub mod menu;
 pub mod spotify_client;
 
@@ -25,7 +19,29 @@ fn exit_proc() {
     exit(1)
 }
 
-fn backup_selection_handler() -> Vec<bool> {
+fn main_menu() -> Mode {
+    loop {
+        menu::main_menu::print_menu();
+
+        match menu::main_menu::handle_input() {
+            Choice::Choice(x) => {
+                match x {
+                    1 => return Mode::Backup,
+                    2 => return Mode::Recover,
+                    _ => panic!("Bad Value received from main menu."),
+                };
+            }
+
+            Choice::Exit => exit_proc(),
+
+            Choice::Default => reset_cursor(),
+
+            _ => todo!("Add submit to main menu"),
+        }
+    }
+}
+
+fn backup_menu() -> Vec<bool> {
     let mut selection: Vec<bool> = vec![false, false, false];
 
     loop {
@@ -54,74 +70,34 @@ async fn main() {
     hide_cursor();
     cls();
 
-    let backup_mode: Mode;
-
     // Discard resize event on Windows
     if cfg!(windows) {
         _ = read().unwrap();
     }
 
-    loop {
-        menu::main_menu::print_menu();
-
-        match menu::main_menu::handle_input() {
-            Choice::Choice(x) => {
-                match x {
-                    1 => backup_mode = Mode::Backup,
-                    2 => backup_mode = Mode::Recover,
-                    _ => panic!("Bad Value received from main menu."),
-                };
-
-                break;
-            }
-
-            Choice::Exit => exit_proc(),
-
-            Choice::Default => reset_cursor(),
-
-            _ => todo!("Add submit to main menu"),
-        }
-    }
+    let backup_mode: Mode = main_menu();
     cls();
 
     let access_token = "";
     match backup_mode {
         Mode::Backup => {
-            let selection = backup_selection_handler();
+            let selection = backup_menu();
             cls();
 
-            if selection[0] {
-                todo!("liked pipeline")
-            }
-            if selection[1] {
-                let res = spotify_client::library::get_playlists(access_token, 2, 0)
-                    .await
-                    .unwrap()
-                    .json::<GetItemsResponse<PlaylistData>>()
-                    .await
-                    .unwrap();
+            // if selection[0] {}
 
-                println!("Playlist: {:#?}", res);
-            }
+            // if selection[1] {}
+
             if selection[2] {
-                let res = spotify_client::library::get_saved_albums(access_token, 50, 0)
-                    .await
-                    .unwrap();
-
-                // println!("{}", res.text().await.unwrap());
-                let thing = res.json::<GetItemsResponse<AlbumData>>().await.unwrap();
-
-                match thing {
-                    Success(data) => dump_albums(data),
-                    Failure(data) => {
-                        println!("Error {}: \"{}\"", data.error.status, data.error.message)
+                match pull_albums_data(access_token).await {
+                    Ok(x) => {
+                        println!("Albums JSON:");
+                        println!("{}", x);
                     }
-                    _ => println!("FAIL"),
+                    Err(x) => {
+                        panic!("{}", x);
+                    }
                 }
-
-                // dump_albums(res);
-
-                // println!("Album: {:#?}", res);
             }
         }
 
