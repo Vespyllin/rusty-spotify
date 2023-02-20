@@ -4,7 +4,7 @@ use crate::spotify_client::{
     ReducedAlbumData,
 };
 
-pub async fn pull_albums_data(access_token: &str) -> Result<String, String> {
+pub async fn pull_albums_data(access_token: &str) -> Result<Vec<ReducedAlbumData>, String> {
     let mut filtered_data: Vec<ReducedAlbumData> = vec![];
 
     let limit = 50;
@@ -64,14 +64,5 @@ pub async fn pull_albums_data(access_token: &str) -> Result<String, String> {
         }
     }
 
-    // Serialize the reduced data to JSON
-    let reduced_json = serde_json::to_string_pretty(&filtered_data);
-    return match reduced_json {
-        Ok(val) => Ok(val),
-
-        Err(err) => {
-            let error_msg = format!("Error: Could not serialize a reduced response.\n{}", err);
-            Err(error_msg)
-        }
-    };
+    Ok(filtered_data)
 }

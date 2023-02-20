@@ -146,7 +146,7 @@ pub enum GetItemsResponse<T> {
     Failure(Error),
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ReducedAlbumData {
     pub id: String,
     pub name: String,
