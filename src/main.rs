@@ -1,10 +1,11 @@
-use backup::{
-    dump_data,
-    web_interface::{dummy_pull, pull_albums_data},
-};
+use backup::web_interface::{pull_albums_data, pull_liked_tracks_data};
 use crossterm::event::read;
-use spotify_client::ReducedAlbumData;
-use std::{future::Future, pin::Pin, process::exit, thread, time::Duration};
+use std::{
+    process::exit,
+    thread::{self},
+    time::Duration,
+};
+use tokio::task::JoinSet;
 
 use menu::{
     backup_menu::{self},
@@ -25,6 +26,7 @@ fn exit_proc() {
 }
 
 #[tokio::main]
+
 async fn main() {
     hide_cursor();
     cls();
@@ -40,7 +42,7 @@ async fn main() {
     };
     cls();
 
-    let access_token = "BQDP_chcndqQHDKm_74ak7MpwzB2dUIMWdZZU77Ola3ZrYLGR8BmSswe6p8d0w4lXWXTuqcrYhk5coqfYQTGszaa7dVMkZIQ_XhxrHtn1ow7JslvSr1Bbq0fpSG73VmMCFSr_d__j1QLkugi8g9-S-BrjmxuoWokvNn6o5ubx_Vv4YYv3gjS7ughJmgBDrxuXBlnng";
+    let access_token = "";
 
     match backup_mode {
         Mode::Backup => {
@@ -50,29 +52,22 @@ async fn main() {
             };
             cls();
 
-            let pull_tracks_req: Pin<
-                Box<dyn Future<Output = Result<Vec<ReducedAlbumData>, String>>>,
-            > = if selection[0] {
-                Box::pin(pull_albums_data(access_token))
-            } else {
-                Box::pin(dummy_pull::<ReducedAlbumData>())
-            };
+            let mut task_set = JoinSet::new();
 
-            let pull_albums_req: Pin<
-                Box<dyn Future<Output = Result<Vec<ReducedAlbumData>, String>>>,
-            > = if selection[1] {
-                Box::pin(pull_albums_data(access_token))
-            } else {
-                Box::pin(dummy_pull::<ReducedAlbumData>())
-            };
-
-            let (_tracks_res, albums_res) = tokio::join!(pull_tracks_req, pull_albums_req);
+            if selection[0] {
+                task_set.spawn(pull_liked_tracks_data(access_token));
+            }
 
             if selection[1] {
-                match dump_data("./albums", &albums_res.unwrap()) {
-                    Ok(e) => println!("{}", e),
-                    Err(e) => println!("{}", e),
-                }
+                task_set.spawn(pull_albums_data(access_token));
+            }
+
+            while let Some(x) = task_set.join_next().await {
+                let y = x.as_ref().unwrap();
+                let z = y.as_ref().unwrap();
+
+                println!("A");
+                println!("{:?}", z[0]);
             }
         }
 

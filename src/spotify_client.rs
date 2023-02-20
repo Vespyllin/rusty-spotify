@@ -116,6 +116,22 @@ pub struct AlbumData {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct LikedTrack {
+    // pub album: Album,
+    pub artists: Vec<Artist>,
+    pub name: String,
+    pub id: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct LikedTrackData {
+    // album: Album,
+    // artist: Artist,
+    pub added_at: String,
+    pub track: LikedTrack,
+}
+
+#[derive(Deserialize, Debug)]
 pub struct GetItemsData<T> {
     pub href: String,
 
@@ -133,6 +149,7 @@ pub struct GetItemsData<T> {
 pub struct Error {
     pub error: ErrorData,
 }
+
 #[derive(Deserialize, Debug)]
 pub struct ErrorData {
     pub status: u64,
@@ -146,7 +163,7 @@ pub enum GetItemsResponse<T> {
     Failure(Error),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ReducedAlbumData {
     pub id: String,
     pub name: String,
@@ -154,5 +171,20 @@ pub struct ReducedAlbumData {
     pub added_at: String,
 }
 
-pub trait FinalState {}
-impl FinalState for ReducedAlbumData {}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ReducedTrackData {
+    pub id: String,
+    pub name: String,
+    pub artist: String,
+    pub added_at: String,
+}
+
+// pub trait FinalState {}
+// impl FinalState for ReducedAlbumData {}
+// impl FinalState for ReducedTrackData {}
+
+#[derive(Debug)]
+pub enum FinalState {
+    ReducedTrack(ReducedTrackData),
+    ReducedAlbum(ReducedAlbumData),
+}
