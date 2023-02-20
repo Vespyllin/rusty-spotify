@@ -153,3 +153,6 @@ pub struct ReducedAlbumData {
     pub artist: String,
     pub added_at: String,
 }
+
+pub trait FinalState {}
+impl FinalState for ReducedAlbumData {}

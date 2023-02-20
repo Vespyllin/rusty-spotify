@@ -1,68 +1,47 @@
-use crate::spotify_client::{
-    self, AlbumData, ErrorData, GetItemsData, GetItemsResponse,
-    GetItemsResponse::{Failure, Success},
-    ReducedAlbumData,
+pub mod web_interface;
+
+use serde::Serialize;
+use sha2::{Digest, Sha256};
+
+use crate::{
+    fs_handler::{get_latest_json, write_data},
+    spotify_client::FinalState,
 };
 
-pub async fn pull_albums_data(access_token: &str) -> Result<Vec<ReducedAlbumData>, String> {
-    let mut filtered_data: Vec<ReducedAlbumData> = vec![];
+fn get_hash(data: &str) -> String {
+    format!(
+        "{:x}",
+        Sha256::digest(
+            data.chars()
+                .filter(|c| !c.is_whitespace())
+                .collect::<String>()
+                .as_bytes()
+        )
+    )
+}
 
-    let limit = 50;
-    let mut offset = 0;
+pub fn backup_handler<T: FinalState + Serialize>(
+    destination_dir: &str,
+    data: &Vec<T>,
+) -> Result<String, String> {
+    let json_data = match serde_json::to_string_pretty(&data) {
+        Ok(val) => val,
+        Err(_) => return Err("Could not serialize backup data".to_string()),
+    };
 
-    // Loop until the library is fully traversed
-    loop {
-        // Make a request for the user's albums
-        let res = match spotify_client::library::get_saved_albums(access_token, limit, offset).await
-        {
-            Ok(val) => val,
-            Err(err) => {
-                let error_msg = format!("Error in Reqwest: {}", err);
-                return Err(error_msg);
-            }
-        };
+    let new_hash = get_hash(&json_data);
 
-        // Deserialize the response
-        let json_res = match res.json::<GetItemsResponse<AlbumData>>().await {
-            Ok(val) => val,
-            Err(err) => {
-                let error_msg =
-                    format!("Error: Could not deserialize get_albums response.\n{}", err);
-                return Err(error_msg);
-            }
-        };
+    let existing_backup = match get_latest_json(destination_dir) {
+        Ok(val) => val,
+        Err(_) => None,
+    };
 
-        // Extract data from wrapper
-        let response_data: GetItemsData<AlbumData> = match json_res {
-            Success(data) => data,
-            Failure(data) => {
-                let ErrorData { status, message } = data.error;
-                let error_msg = format!("Error from Spotify: {} - \"{}\"", status, message);
-                return Err(error_msg);
-            }
-        };
-
-        // Filter the album's fields
-        let mut filtered_album: Vec<ReducedAlbumData> = response_data
-            .items
-            .into_iter()
-            .map(|item| ReducedAlbumData {
-                id: item.album.id,
-                name: item.album.name,
-                artist: item.album.artists[0].name.to_owned(),
-                added_at: item.added_at.unwrap_or("never".to_string()),
-            })
-            .collect();
-
-        // Collect the reduced data into a vector
-        filtered_data.append(&mut filtered_album);
-        offset += limit;
-
-        // Break when the API signals that we have traversed all albums
-        if response_data.next.is_none() {
-            break;
-        }
+    if existing_backup.is_some() && get_hash(&existing_backup.unwrap()) == new_hash {
+        return Ok("Existing backup is up to date.".to_owned());
     }
 
-    Ok(filtered_data)
+    match write_data(destination_dir, &new_hash[5..15], &json_data) {
+        Ok(_) => return Ok("Successfully backed up data".to_owned()),
+        Err(_) => return Err(format!("Failed to backup data to {}", destination_dir)),
+    }
 }

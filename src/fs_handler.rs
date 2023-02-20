@@ -25,14 +25,16 @@ pub fn get_latest_json(given_path: &str) -> Result<Option<String>, String> {
                 Err(_) => return None,
             };
 
-            let file_name = match item.file_name().to_str() {
-                Some(val) => val.to_string(),
+            let file_path = match item.path().to_str() {
+                Some(val) => {
+                    if val.ends_with(".json") {
+                        val.to_owned()
+                    } else {
+                        return None;
+                    }
+                }
                 None => return None,
             };
-
-            if !file_name.ends_with(".json") {
-                return None;
-            }
 
             let meta_data = match item.metadata() {
                 Ok(val) => val,
@@ -44,7 +46,7 @@ pub fn get_latest_json(given_path: &str) -> Result<Option<String>, String> {
                 Err(_) => return None,
             };
 
-            return Some((created_at, file_name));
+            return Some((created_at, file_path));
         })
         .filter_map(std::convert::identity)
         .reduce(|curr, new| {
@@ -57,7 +59,7 @@ pub fn get_latest_json(given_path: &str) -> Result<Option<String>, String> {
 
     match latest_file_metadata {
         Some(val) => {
-            let latest_json_path = format!("{}{}", given_path, val.1);
+            let (_, latest_json_path) = val;
 
             match fs::read_to_string(&latest_json_path) {
                 Ok(val) => Ok(Some(val)),
@@ -72,7 +74,7 @@ pub fn get_latest_json(given_path: &str) -> Result<Option<String>, String> {
     }
 }
 
-pub fn dump_backup(destination_dir: &str, title: &str, data: &str) -> Result<(), String> {
+pub fn write_data(destination_dir: &str, title: &str, data: &str) -> Result<(), String> {
     let path = Path::new(destination_dir);
 
     if !path.is_dir() && fs::create_dir_all(destination_dir).is_err() {

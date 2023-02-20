@@ -35,10 +35,10 @@ pub fn print_menu() {
 }
 
 pub fn handle_input() -> Choice {
-    enable_raw_mode().unwrap();
+    enable_raw_mode().expect("Could not enable raw mode. main_menu::handle_input");
     let choice: Choice;
 
-    match read().unwrap() {
+    match read().expect("failed to read input. main_menu::handle_input") {
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
@@ -63,10 +63,10 @@ pub fn handle_input() -> Choice {
 
     // Double input workaround for Windows
     if cfg!(windows) {
-        _ = read().unwrap();
+        _ = read().expect("failed to read input. main_menu::handle_input");
     }
 
-    disable_raw_mode().unwrap();
+    disable_raw_mode().expect("Could not disable raw mode. main_menu::handle_input");
 
     choice
 }

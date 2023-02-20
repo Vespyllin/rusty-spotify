@@ -1,9 +1,7 @@
+use backup::{backup_handler, web_interface::pull_albums_data};
 use crossterm::event::read;
-use fs_handler::{dump_backup, get_latest_json};
-use sha2::{Digest, Sha256};
-use std::process::exit;
+use std::{process::exit, thread, time::Duration};
 
-use backup::pull_albums_data;
 use menu::{cls, hide_cursor, reset_cursor, reset_terminal, Choice};
 
 pub mod backup;
@@ -68,50 +66,6 @@ fn backup_menu() -> Vec<bool> {
     selection
 }
 
-async fn handle_album_backup(access_token: &str, album_path: &str) -> Result<String, String> {
-    let album_data = pull_albums_data(access_token).await?;
-
-    let old_hash = match get_latest_json(album_path)? {
-        Some(val) => Some(format!(
-            "{:x}",
-            Sha256::digest(
-                val.chars()
-                    .filter(|c| !c.is_whitespace())
-                    .collect::<String>()
-                    .as_bytes()
-            )
-        )),
-        None => None,
-    };
-
-    let album_json = match serde_json::to_string(&album_data) {
-        Ok(val) => val,
-        Err(_) => return Err("Could not serialize album backup data".to_string()),
-    };
-
-    let new_hash = format!(
-        "{:x}",
-        Sha256::digest(
-            album_json
-                .chars()
-                .filter(|c| !c.is_whitespace())
-                .collect::<String>()
-                .as_bytes()
-        )
-    );
-
-    if old_hash.is_some() && old_hash.clone().unwrap() == new_hash {
-        println!("hashes\nn:{}\no:{}", new_hash, old_hash.unwrap());
-        return Ok("Latest album backup is up to date.".to_string());
-    }
-    println!("hashes\nn:{}\no:{}", new_hash, old_hash.unwrap());
-
-    let title = format!("album_{}.json", &new_hash[..10]);
-
-    dump_backup("./albums/", &title, &album_json)?;
-    Ok("Successfully updated albums.".to_string())
-}
-
 #[tokio::main]
 async fn main() {
     hide_cursor();
@@ -119,13 +73,13 @@ async fn main() {
 
     // Discard resize event on Windows
     if cfg!(windows) {
-        _ = read().unwrap();
+        _ = read().expect("failed to read input. main");
     }
 
     let backup_mode: Mode = main_menu();
     cls();
 
-    let access_token = "";
+    let access_token = "BQDP_chcndqQHDKm_74ak7MpwzB2dUIMWdZZU77Ola3ZrYLGR8BmSswe6p8d0w4lXWXTuqcrYhk5coqfYQTGszaa7dVMkZIQ_XhxrHtn1ow7JslvSr1Bbq0fpSG73VmMCFSr_d__j1QLkugi8g9-S-BrjmxuoWokvNn6o5ubx_Vv4YYv3gjS7ughJmgBDrxuXBlnng";
     match backup_mode {
         Mode::Backup => {
             let selection = backup_menu();
@@ -136,14 +90,21 @@ async fn main() {
             // if selection[1] {}
 
             if selection[2] {
-                handle_album_backup(access_token, "./albums/")
-                    .await
-                    .unwrap();
+                let x = pull_albums_data(access_token).await;
+
+                if x.is_ok() {
+                    let y = x.unwrap();
+                    match backup_handler("./albums/", &y) {
+                        Ok(val) => println!("{}", val),
+                        Err(e) => println!("{}", e),
+                    }
+                }
             }
         }
 
         Mode::Recover => todo!("TODO: Recover menu"),
     }
 
+    thread::sleep(Duration::from_secs(3));
     reset_terminal();
 }
