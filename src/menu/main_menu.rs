@@ -6,9 +6,9 @@ use crossterm::{
 
 use crate::menu::{sep, WIDTH};
 
-use super::Choice;
+use super::{reset_cursor, Choice, Mode};
 
-pub fn print_menu() {
+fn print_menu() {
     sep();
 
     let logo = format!(
@@ -34,7 +34,7 @@ pub fn print_menu() {
     sep();
 }
 
-pub fn handle_input() -> Choice {
+fn handle_input() -> Choice {
     enable_raw_mode().expect("Could not enable raw mode. main_menu::handle_input");
     let choice: Choice;
 
@@ -69,4 +69,26 @@ pub fn handle_input() -> Choice {
     disable_raw_mode().expect("Could not disable raw mode. main_menu::handle_input");
 
     choice
+}
+
+pub fn menu() -> Option<Mode> {
+    loop {
+        print_menu();
+
+        match handle_input() {
+            Choice::Choice(x) => {
+                match x {
+                    1 => return Some(Mode::Backup),
+                    2 => return Some(Mode::Recover),
+                    _ => panic!("Bad Value received from main menu."),
+                };
+            }
+
+            Choice::Exit => return None,
+
+            Choice::Default => reset_cursor(),
+
+            _ => todo!("Add submit to main menu"),
+        }
+    }
 }

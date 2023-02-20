@@ -20,7 +20,7 @@ fn get_hash(data: &str) -> String {
     )
 }
 
-pub fn backup_handler<T: FinalState + Serialize>(
+pub fn dump_data<T: FinalState + Serialize>(
     destination_dir: &str,
     data: &Vec<T>,
 ) -> Result<String, String> {

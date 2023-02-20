@@ -6,10 +6,10 @@ use crossterm::{
 
 use crate::menu::{sep, WIDTH};
 
-use super::Choice;
+use super::{reset_cursor, Choice};
 
-pub fn print_menu(selected: &mut Vec<bool>) {
-    let options = vec!["Liked tracks.", "Saved playlists.", "Saved Albums."];
+fn print_menu(selected: &mut Vec<bool>) {
+    let options = vec!["Liked tracks.", "Saved albums.", "Saved playlists."];
 
     assert_eq!(
         selected.len(),
@@ -44,7 +44,7 @@ pub fn print_menu(selected: &mut Vec<bool>) {
     sep();
 }
 
-pub fn handle_input() -> Choice {
+fn handle_input() -> Choice {
     let choice: Choice;
 
     enable_raw_mode().unwrap();
@@ -87,4 +87,28 @@ pub fn handle_input() -> Choice {
     disable_raw_mode().unwrap();
 
     choice
+}
+
+pub fn menu() -> Option<Vec<bool>> {
+    let mut selection: Vec<bool> = vec![false, false, false];
+
+    loop {
+        print_menu(&mut selection);
+
+        match handle_input() {
+            Choice::Submit => {
+                // If at least 1 option is selected, allow the user to continue
+                if selection.iter().fold(false, |acc, v| acc || *v) {
+                    break;
+                }
+            }
+            Choice::Choice(x) => selection[x - 1] = !selection[x - 1],
+            Choice::Exit => return None,
+            _ => {}
+        }
+
+        reset_cursor();
+    }
+
+    Some(selection)
 }

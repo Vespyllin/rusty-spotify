@@ -9,6 +9,11 @@ use crossterm::{
 pub mod backup_menu;
 pub mod main_menu;
 
+pub enum Mode {
+    Backup,
+    Recover,
+}
+
 pub enum Choice {
     Choice(usize),
     Exit,

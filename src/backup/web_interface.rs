@@ -1,5 +1,5 @@
 use crate::spotify_client::{
-    self, AlbumData, ErrorData, GetItemsData, GetItemsResponse,
+    self, AlbumData, ErrorData, FinalState, GetItemsData, GetItemsResponse,
     GetItemsResponse::{Failure, Success},
     ReducedAlbumData,
 };
@@ -65,4 +65,8 @@ pub async fn pull_albums_data(access_token: &str) -> Result<Vec<ReducedAlbumData
     }
 
     Ok(filtered_data)
+}
+
+pub async fn dummy_pull<T: FinalState>() -> Result<Vec<T>, String> {
+    return Ok(vec![]);
 }
