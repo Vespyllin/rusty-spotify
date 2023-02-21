@@ -15,8 +15,8 @@ pub struct Image {
 
 #[derive(Deserialize, Debug)]
 pub struct Owner {
-    pub id: String,
-    pub display_name: String,
+    pub id: Option<String>,
+    pub display_name: Option<String>,
 
     #[serde(rename = "type")]
     pub _type: String,
@@ -24,9 +24,8 @@ pub struct Owner {
 
 #[derive(Deserialize, Debug)]
 pub struct PlaylistTracksData {
-    pub artists: Vec<Artist>,
-    pub added_by: String,
     pub added_at: String,
+    pub added_by: Owner,
     pub track: Track,
 }
 
@@ -46,10 +45,8 @@ pub struct PlaylistMetadata {
 pub struct Artist {
     pub genres: Option<Vec<String>>,
 
-    pub id: String,
-    pub name: String,
-
-    pub uri: String,
+    pub id: Option<String>,
+    pub name: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -100,8 +97,8 @@ pub struct AlbumData {
 
 #[derive(Deserialize, Debug)]
 pub struct Track {
-    pub id: String,
-    pub name: String,
+    pub id: Option<String>,
+    pub name: Option<String>,
     pub artists: Vec<Artist>,
 }
 

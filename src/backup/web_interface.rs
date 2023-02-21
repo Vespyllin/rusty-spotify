@@ -5,10 +5,7 @@ use crate::spotify_client::{
     Track,
 };
 
-use super::{
-    BackupData, ReducedAlbumData, ReducedData, ReducedPlaylistData, ReducedPlaylistMetadata,
-    ReducedTrackData,
-};
+use super::{BackupData, ReducedAlbumData, ReducedData, ReducedPlaylistMetadata, ReducedTrackData};
 
 pub async fn pull_liked_tracks(access_token: &str) -> Result<BackupData, String> {
     let mut filtered_data: BackupData = vec![];
@@ -56,9 +53,9 @@ pub async fn pull_liked_tracks(access_token: &str) -> Result<BackupData, String>
                 let Track { id, name, artists } = item.track;
                 return ReducedData::ReducedTrack(ReducedTrackData {
                     added_at: item.added_at,
-                    id,
-                    name,
-                    artist: artists[0].name.to_owned(),
+                    id: id.unwrap_or("local".to_owned()),
+                    name: name.unwrap_or("local".to_owned()),
+                    artist: artists[0].name.to_owned().unwrap_or("local".to_owned()),
                 });
             })
             .collect();
@@ -125,7 +122,7 @@ pub async fn pull_albums(access_token: &str) -> Result<BackupData, String> {
                 ReducedData::ReducedAlbum(ReducedAlbumData {
                     id,
                     name,
-                    artist: artists[0].name.to_owned(),
+                    artist: artists[0].name.to_owned().unwrap_or("local".to_owned()),
                     added_at: item.added_at,
                 })
             })
@@ -200,7 +197,7 @@ pub async fn pull_playlists(access_token: &str) -> Result<Vec<ReducedPlaylistMet
                     id,
                     name,
                     description,
-                    owner_display_name: owner.display_name,
+                    owner_display_name: owner.display_name.unwrap_or("Spotify".to_owned()),
                 }
             })
             .collect();
@@ -220,24 +217,9 @@ pub async fn pull_playlists(access_token: &str) -> Result<Vec<ReducedPlaylistMet
 
 pub async fn pull_playlist_tracks(
     access_token: &str,
-    playlist_metadata: &ReducedPlaylistMetadata,
-) -> Result<ReducedPlaylistData, String> {
-    let ReducedPlaylistMetadata {
-        id,
-        name,
-        description,
-        owner_display_name,
-    } = playlist_metadata;
-
-    let mut filtered_data = ReducedPlaylistData {
-        meta: ReducedPlaylistMetadata {
-            id: id.to_owned(),
-            name: name.to_owned(),
-            description: description.to_owned(),
-            owner_display_name: owner_display_name.to_owned(),
-        },
-        tracks: vec![],
-    };
+    playlist_id: &str,
+) -> Result<Vec<ReducedTrackData>, String> {
+    let mut filtered_data: Vec<ReducedTrackData> = vec![];
 
     let limit = 50;
     let mut offset = 0;
@@ -246,7 +228,7 @@ pub async fn pull_playlist_tracks(
     loop {
         // Make a request for the user's albums
         let res = match spotify_client::playlist::get_playlist_data(
-            &playlist_metadata.id,
+            playlist_id,
             access_token,
             limit,
             offset,
@@ -271,7 +253,6 @@ pub async fn pull_playlist_tracks(
                 return Err(error_msg);
             }
         };
-
         // Extract data from wrapper
         let response_data: SpotifyData<PlaylistTracksData> = match json_res {
             Success(data) => data,
@@ -282,31 +263,27 @@ pub async fn pull_playlist_tracks(
             }
         };
 
-        // Filter the tracks' fields
         let mut filtered_playlists: Vec<ReducedTrackData> = response_data
             .items
             .into_iter()
             .map(|item| {
                 let PlaylistTracksData {
-                    artists,
-                    added_at,
-                    track,
-                    ..
+                    added_at, track, ..
                 } = item;
 
                 ReducedTrackData {
-                    id: track.id,
-                    name: track.name,
-                    added_at: added_at,
-                    artist: artists[0].name.to_owned(),
+                    id: track.id.unwrap_or("local".to_owned()),
+                    name: track.name.unwrap_or("local".to_owned()),
+                    artist: track.artists[0]
+                        .name
+                        .to_owned()
+                        .unwrap_or("local".to_owned()),
+                    added_at: added_at.to_owned(),
                 }
             })
             .collect();
 
-        // Collect the reduced data into a vector
-        filtered_data.tracks.append(&mut filtered_playlists);
-
-        // filtered_data.append(&mut filtered_playlists);
+        filtered_data.append(&mut filtered_playlists);
         offset += limit;
 
         // Break when the API signals that we have traversed all liked tracks

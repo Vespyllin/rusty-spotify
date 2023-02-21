@@ -7,7 +7,7 @@ use std::{
     time::Duration,
 };
 
-use crate::backup::dump_data;
+use crate::backup::{dump_data, web_interface::pull_playlist_tracks, ReducedPlaylistData};
 
 pub mod backup;
 mod fs_handler;
@@ -37,7 +37,7 @@ async fn main() {
     };
     cls();
 
-    let access_token = "BQA79gDyqMKLhKxigPgH-Vwu7lyw94EcVHGk6q4v4QLJK_OLprOUxOBKHwtLx3jgwumoUAR8odAV_ffY3G4BppYEqi6XpRjgO6cKSGXWc5eG-eZppREL0JGCZ0yRDYUVbSejZ_cczkbxz4x3u3vM8x2eAf8D0dPBihH2JPu5n-Y1zmN97VYOH0puNhPepIXDb-JO1w";
+    let access_token = "BQBmgoxruHLd_MrxnTSnuTz0dvOT36XcpYrdfi4hPLq8wT-rgAH8KYHw51noy1hgW30uxowlM2we3TCQEqxmWo-qnt1SWhWbZQ9G4JheFfOlyBwuNFt7h1-zkTh0q_ShXJUmmQG4d0no_vdhMl4LEAsoDJ4wV_J8z82KTqIOvnRAkXVdu3cMz-UCHhnpxm7hoLyECQ";
 
     match backup_mode {
         Mode::Backup => {
@@ -73,8 +73,39 @@ async fn main() {
             }
 
             if selection[2] {
-                let _playlist_ids = match pull_playlists(access_token).await {
-                    Ok(val) => println!("Playlist: {:?}", val),
+                match pull_playlists(access_token).await {
+                    Ok(val) => {
+                        println!("Pulled playlists!");
+
+                        let mut playlists_backup: Vec<ReducedPlaylistData> = vec![];
+
+                        for playlist_metadata in val {
+                            match pull_playlist_tracks(access_token, &playlist_metadata.id).await {
+                                Ok(reduced_tracks) => {
+                                    println!("pulled {}", playlist_metadata.name);
+                                    playlists_backup.push(ReducedPlaylistData {
+                                        meta: playlist_metadata,
+                                        tracks: reduced_tracks,
+                                    })
+                                }
+                                Err(e) => {
+                                    println!(
+                                        "Could not backup playlist {}\n{}",
+                                        playlist_metadata.name, e
+                                    );
+                                }
+                            }
+                        }
+
+                        match dump_data("./playlists", &playlists_backup) {
+                            Ok(val) => {
+                                println!("good {}", val)
+                            }
+                            Err(e) => {
+                                println!("bad {}", e)
+                            }
+                        }
+                    }
                     Err(e) => {
                         println!("Could not get playlists\n{}", e);
                     }
