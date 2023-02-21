@@ -1,18 +1,13 @@
-use backup::web_interface::{pull_albums_data, pull_liked_tracks_data};
+use backup::web_interface::{pull_albums, pull_liked_tracks, pull_playlists};
 use crossterm::event::read;
+use menu::{backup_menu, cls, hide_cursor, main_menu, reset_terminal, Mode};
 use std::{
     process::exit,
     thread::{self},
     time::Duration,
 };
-use tokio::task::JoinSet;
 
-use menu::{
-    backup_menu::{self},
-    cls, hide_cursor,
-    main_menu::{self},
-    reset_terminal, Mode,
-};
+use crate::backup::dump_data;
 
 pub mod backup;
 mod fs_handler;
@@ -42,7 +37,7 @@ async fn main() {
     };
     cls();
 
-    let access_token = "";
+    let access_token = "BQA79gDyqMKLhKxigPgH-Vwu7lyw94EcVHGk6q4v4QLJK_OLprOUxOBKHwtLx3jgwumoUAR8odAV_ffY3G4BppYEqi6XpRjgO6cKSGXWc5eG-eZppREL0JGCZ0yRDYUVbSejZ_cczkbxz4x3u3vM8x2eAf8D0dPBihH2JPu5n-Y1zmN97VYOH0puNhPepIXDb-JO1w";
 
     match backup_mode {
         Mode::Backup => {
@@ -52,22 +47,38 @@ async fn main() {
             };
             cls();
 
-            let mut task_set = JoinSet::new();
-
             if selection[0] {
-                task_set.spawn(pull_liked_tracks_data(access_token));
+                match pull_liked_tracks(access_token).await {
+                    Ok(val) => match dump_data("./tracks", &val) {
+                        Ok(msg) => println!("Liked Tracks: {}", msg),
+                        Err(msg) => println!("Liked Tracks: {}", msg),
+                    },
+                    Err(e) => {
+                        println!("Could not backup liked tracks\n{}", e);
+                    }
+                };
             }
 
             if selection[1] {
-                task_set.spawn(pull_albums_data(access_token));
+                match pull_albums(access_token).await {
+                    Ok(val) => match dump_data("./albums", &val) {
+                        Ok(msg) => println!("Albums: {}", msg),
+                        Err(msg) => println!("Albums: {}", msg),
+                    },
+                    Err(e) => {
+                        println!("Could not backup albums\n{}", e);
+                        return exit_proc();
+                    }
+                }
             }
 
-            while let Some(x) = task_set.join_next().await {
-                let y = x.as_ref().unwrap();
-                let z = y.as_ref().unwrap();
-
-                println!("A");
-                println!("{:?}", z[0]);
+            if selection[2] {
+                let _playlist_ids = match pull_playlists(access_token).await {
+                    Ok(val) => println!("Playlist: {:?}", val),
+                    Err(e) => {
+                        println!("Could not get playlists\n{}", e);
+                    }
+                };
             }
         }
 

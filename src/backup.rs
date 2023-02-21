@@ -1,9 +1,49 @@
 pub mod web_interface;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use crate::fs_handler::{get_latest_json, write_data};
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ReducedAlbumData {
+    pub id: String,
+    pub name: String,
+    pub artist: String,
+    pub added_at: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ReducedTrackData {
+    pub id: String,
+    pub name: String,
+    pub artist: String,
+    pub added_at: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ReducedPlaylistData {
+    pub meta: ReducedPlaylistMetadata,
+
+    pub tracks: Vec<ReducedTrackData>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ReducedPlaylistMetadata {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub owner_display_name: String,
+}
+
+#[derive(Serialize, Debug)]
+pub enum ReducedData {
+    ReducedTrack(ReducedTrackData),
+    ReducedAlbum(ReducedAlbumData),
+    ReducedPlaylist(ReducedPlaylistData),
+}
+
+pub type BackupData = Vec<ReducedData>;
 
 fn get_hash(data: &str) -> String {
     format!(

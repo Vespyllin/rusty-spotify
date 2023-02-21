@@ -41,6 +41,8 @@ fn print_menu(selected: &mut Vec<bool>) {
             }
         });
 
+    println!("q. Quit.");
+
     sep();
 }
 

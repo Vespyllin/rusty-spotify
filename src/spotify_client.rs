@@ -1,19 +1,10 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 const SPOTIFY_LIBRARY_URL: &str = "https://api.spotify.com/v1/me";
+const SPOTIFY_PLAYLIST_URL: &str = "https://api.spotify.com/v1/playlists";
 
 pub mod library;
-
-#[derive(Deserialize, Debug)]
-pub struct PlaylistTrackMetaData {
-    pub href: Option<String>,
-    pub total: Option<u64>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct ExternalUrl {
-    pub spotify: Option<String>,
-}
+pub mod playlist;
 
 #[derive(Deserialize, Debug)]
 pub struct Image {
@@ -23,62 +14,56 @@ pub struct Image {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct PlaylistData {
+pub struct Owner {
+    pub id: String,
+    pub display_name: String,
+
+    #[serde(rename = "type")]
+    pub _type: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct PlaylistTracksData {
+    pub artists: Vec<Artist>,
+    pub added_by: String,
+    pub added_at: String,
+    pub track: Track,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct PlaylistMetadata {
     pub collaborative: Option<bool>,
+
+    pub id: String,
+    pub name: String,
     pub description: Option<String>,
 
-    pub external_urls: Option<ExternalUrl>,
-    pub href: Option<String>,
-
-    pub id: Option<String>,
-    pub images: Option<Vec<Image>>,
-    pub name: Option<String>,
-    // pub owner: Owner,
-    pub public: Option<bool>,
-    pub snapshot_id: Option<String>,
-    pub tracks: Option<PlaylistTrackMetaData>,
-
-    #[serde(rename = "type")]
-    pub _type: Option<String>,
-    pub uri: Option<String>,
+    pub images: Vec<Image>,
+    pub owner: Owner,
 }
+
 #[derive(Deserialize, Debug)]
 pub struct Artist {
-    pub external_urls: Option<ExternalUrl>,
     pub genres: Option<Vec<String>>,
-    pub href: String,
+
     pub id: String,
-    pub images: Option<Vec<Image>>,
     pub name: String,
-    #[serde(rename = "type")]
-    pub _type: Option<String>,
+
     pub uri: String,
 }
 
 #[derive(Deserialize, Debug)]
-pub struct Track {
-    pub artists: Vec<Artist>,
-    pub duration_ms: Option<u64>,
-    pub explicit: Option<bool>,
-
-    pub href: Option<String>,
+pub struct AlbumTrack {
     pub id: Option<String>,
-    pub is_playable: Option<bool>,
-
     pub name: Option<String>,
     pub track_number: Option<u64>,
-
-    #[serde(rename = "type")]
-    pub _type: Option<String>,
-
-    pub uri: Option<String>,
-    pub is_local: Option<bool>,
+    pub artists: Vec<Artist>,
 }
 
 #[derive(Deserialize, Debug)]
-pub struct TrackData {
-    pub href: String,
-    pub items: Vec<Track>,
+pub struct AlbumTrackData {
+    pub items: Vec<AlbumTrack>,
+
     pub limit: u64,
     pub offset: u64,
     pub total: u64,
@@ -89,52 +74,45 @@ pub struct TrackData {
 
 #[derive(Deserialize, Debug)]
 pub struct Album {
-    pub album_type: String,
-    pub total_tracks: u64,
-    pub external_urls: ExternalUrl,
-    pub href: String,
     pub id: String,
-    pub images: Vec<Image>,
     pub name: String,
     pub release_date: String,
-    pub release_data_precision: Option<String>,
+    pub album_type: String,
+
+    pub images: Vec<Image>,
 
     #[serde(rename = "type")]
     pub _type: String,
-    pub uri: String,
+
+    pub total_tracks: u64,
+    pub tracks: AlbumTrackData,
 
     pub genres: Vec<String>,
     pub label: String,
     pub artists: Vec<Artist>,
-    pub tracks: TrackData,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct AlbumData {
-    pub added_at: Option<String>,
+    pub added_at: String,
     pub album: Album,
 }
 
 #[derive(Deserialize, Debug)]
-pub struct LikedTrack {
-    // pub album: Album,
-    pub artists: Vec<Artist>,
-    pub name: String,
+pub struct Track {
     pub id: String,
+    pub name: String,
+    pub artists: Vec<Artist>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct LikedTrackData {
-    // album: Album,
-    // artist: Artist,
     pub added_at: String,
-    pub track: LikedTrack,
+    pub track: Track,
 }
 
 #[derive(Deserialize, Debug)]
-pub struct GetItemsData<T> {
-    pub href: String,
-
+pub struct SpotifyData<T> {
     pub items: Vec<T>,
 
     pub limit: u64,
@@ -158,33 +136,7 @@ pub struct ErrorData {
 
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
-pub enum GetItemsResponse<T> {
-    Success(GetItemsData<T>),
+pub enum SpotifyResponse<T> {
+    Success(SpotifyData<T>),
     Failure(Error),
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ReducedAlbumData {
-    pub id: String,
-    pub name: String,
-    pub artist: String,
-    pub added_at: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ReducedTrackData {
-    pub id: String,
-    pub name: String,
-    pub artist: String,
-    pub added_at: String,
-}
-
-// pub trait FinalState {}
-// impl FinalState for ReducedAlbumData {}
-// impl FinalState for ReducedTrackData {}
-
-#[derive(Debug)]
-pub enum FinalState {
-    ReducedTrack(ReducedTrackData),
-    ReducedAlbum(ReducedAlbumData),
 }

@@ -1,11 +1,17 @@
 use crate::spotify_client::{
-    self, AlbumData, ErrorData, FinalState, GetItemsData, GetItemsResponse,
-    GetItemsResponse::{Failure, Success},
-    LikedTrack, LikedTrackData, ReducedAlbumData, ReducedTrackData,
+    self, Album, AlbumData, ErrorData, LikedTrackData, PlaylistMetadata, PlaylistTracksData,
+    SpotifyData, SpotifyResponse,
+    SpotifyResponse::{Failure, Success},
+    Track,
 };
 
-pub async fn pull_liked_tracks_data(access_token: &str) -> Result<Vec<FinalState>, String> {
-    let mut filtered_data: Vec<FinalState> = vec![];
+use super::{
+    BackupData, ReducedAlbumData, ReducedData, ReducedPlaylistData, ReducedPlaylistMetadata,
+    ReducedTrackData,
+};
+
+pub async fn pull_liked_tracks(access_token: &str) -> Result<BackupData, String> {
+    let mut filtered_data: BackupData = vec![];
 
     let limit = 50;
     let mut offset = 0;
@@ -23,7 +29,7 @@ pub async fn pull_liked_tracks_data(access_token: &str) -> Result<Vec<FinalState
         };
 
         // Deserialize the response
-        let json_res = match res.json::<GetItemsResponse<LikedTrackData>>().await {
+        let json_res = match res.json::<SpotifyResponse<LikedTrackData>>().await {
             Ok(val) => val,
             Err(err) => {
                 let error_msg =
@@ -33,7 +39,7 @@ pub async fn pull_liked_tracks_data(access_token: &str) -> Result<Vec<FinalState
         };
 
         // Extract data from wrapper
-        let response_data: GetItemsData<LikedTrackData> = match json_res {
+        let response_data: SpotifyData<LikedTrackData> = match json_res {
             Success(data) => data,
             Failure(data) => {
                 let ErrorData { status, message } = data.error;
@@ -42,22 +48,23 @@ pub async fn pull_liked_tracks_data(access_token: &str) -> Result<Vec<FinalState
             }
         };
 
-        let mut filtered_tracks: Vec<FinalState> = response_data
+        // Filter the tracks' fields
+        let mut filtered_tracks: BackupData = response_data
             .items
-            .iter()
+            .into_iter()
             .map(|item| {
-                let LikedTrack { id, name, artists } = &item.track;
-                return FinalState::ReducedTrack(ReducedTrackData {
-                    added_at: item.added_at.to_owned(),
-                    id: id.to_owned().to_string(),
-                    name: name.to_owned().to_string(),
+                let Track { id, name, artists } = item.track;
+                return ReducedData::ReducedTrack(ReducedTrackData {
+                    added_at: item.added_at,
+                    id,
+                    name,
                     artist: artists[0].name.to_owned(),
                 });
             })
             .collect();
 
+        // Collect the reduced data into a vector
         filtered_data.append(&mut filtered_tracks);
-
         offset += limit;
 
         // Break when the API signals that we have traversed all liked tracks
@@ -69,8 +76,8 @@ pub async fn pull_liked_tracks_data(access_token: &str) -> Result<Vec<FinalState
     Ok(filtered_data)
 }
 
-pub async fn pull_albums_data(access_token: &str) -> Result<Vec<FinalState>, String> {
-    let mut filtered_data: Vec<FinalState> = vec![];
+pub async fn pull_albums(access_token: &str) -> Result<BackupData, String> {
+    let mut filtered_data: BackupData = vec![];
 
     let limit = 50;
     let mut offset = 0;
@@ -88,7 +95,7 @@ pub async fn pull_albums_data(access_token: &str) -> Result<Vec<FinalState>, Str
         };
 
         // Deserialize the response
-        let json_res = match res.json::<GetItemsResponse<AlbumData>>().await {
+        let json_res = match res.json::<SpotifyResponse<AlbumData>>().await {
             Ok(val) => val,
             Err(err) => {
                 let error_msg =
@@ -98,7 +105,7 @@ pub async fn pull_albums_data(access_token: &str) -> Result<Vec<FinalState>, Str
         };
 
         // Extract data from wrapper
-        let response_data: GetItemsData<AlbumData> = match json_res {
+        let response_data: SpotifyData<AlbumData> = match json_res {
             Success(data) => data,
             Failure(data) => {
                 let ErrorData { status, message } = data.error;
@@ -108,15 +115,18 @@ pub async fn pull_albums_data(access_token: &str) -> Result<Vec<FinalState>, Str
         };
 
         // Filter the album's fields
-        let mut filtered_album: Vec<FinalState> = response_data
+        let mut filtered_album: BackupData = response_data
             .items
             .into_iter()
             .map(|item| {
-                FinalState::ReducedAlbum(ReducedAlbumData {
-                    id: item.album.id,
-                    name: item.album.name,
-                    artist: item.album.artists[0].name.to_owned(),
-                    added_at: item.added_at.unwrap_or("never".to_string()),
+                let Album {
+                    id, name, artists, ..
+                } = item.album;
+                ReducedData::ReducedAlbum(ReducedAlbumData {
+                    id,
+                    name,
+                    artist: artists[0].name.to_owned(),
+                    added_at: item.added_at,
                 })
             })
             .collect();
@@ -134,6 +144,176 @@ pub async fn pull_albums_data(access_token: &str) -> Result<Vec<FinalState>, Str
     Ok(filtered_data)
 }
 
-pub async fn dummy_pull() -> Result<Vec<FinalState>, String> {
-    return Ok(vec![]);
+pub async fn pull_playlists(access_token: &str) -> Result<Vec<ReducedPlaylistMetadata>, String> {
+    let mut filtered_data: Vec<ReducedPlaylistMetadata> = vec![];
+
+    let limit = 50;
+    let mut offset = 0;
+
+    // Loop until the library is fully traversed
+    loop {
+        // Make a request for the user's albums
+        let res = match spotify_client::library::get_playlists(access_token, limit, offset).await {
+            Ok(val) => val,
+            Err(err) => {
+                let error_msg = format!("Error in Reqwest: {}", err);
+                return Err(error_msg);
+            }
+        };
+
+        // Deserialize the response
+        let json_res = match res.json::<SpotifyResponse<PlaylistMetadata>>().await {
+            Ok(val) => val,
+            Err(err) => {
+                let error_msg = format!(
+                    "Error: Could not deserialize get_playlists response.\n{}",
+                    err
+                );
+                return Err(error_msg);
+            }
+        };
+
+        // Extract data from wrapper
+        let response_data: SpotifyData<PlaylistMetadata> = match json_res {
+            Success(data) => data,
+            Failure(data) => {
+                let ErrorData { status, message } = data.error;
+                let error_msg = format!("Error from Spotify: {} - \"{}\"", status, message);
+                return Err(error_msg);
+            }
+        };
+
+        // Filter the tracks' fields
+        let mut filtered_playlists: Vec<ReducedPlaylistMetadata> = response_data
+            .items
+            .into_iter()
+            .map(|item| {
+                let PlaylistMetadata {
+                    id,
+                    name,
+                    description,
+                    owner,
+                    ..
+                } = item;
+
+                ReducedPlaylistMetadata {
+                    id,
+                    name,
+                    description,
+                    owner_display_name: owner.display_name,
+                }
+            })
+            .collect();
+
+        // Collect the reduced data into a vector
+        filtered_data.append(&mut filtered_playlists);
+        offset += limit;
+
+        // Break when the API signals that we have traversed all liked tracks
+        if response_data.next.is_none() {
+            break;
+        }
+    }
+
+    Ok(filtered_data)
+}
+
+pub async fn pull_playlist_tracks(
+    access_token: &str,
+    playlist_metadata: &ReducedPlaylistMetadata,
+) -> Result<ReducedPlaylistData, String> {
+    let ReducedPlaylistMetadata {
+        id,
+        name,
+        description,
+        owner_display_name,
+    } = playlist_metadata;
+
+    let mut filtered_data = ReducedPlaylistData {
+        meta: ReducedPlaylistMetadata {
+            id: id.to_owned(),
+            name: name.to_owned(),
+            description: description.to_owned(),
+            owner_display_name: owner_display_name.to_owned(),
+        },
+        tracks: vec![],
+    };
+
+    let limit = 50;
+    let mut offset = 0;
+
+    // Loop until the library is fully traversed
+    loop {
+        // Make a request for the user's albums
+        let res = match spotify_client::playlist::get_playlist_data(
+            &playlist_metadata.id,
+            access_token,
+            limit,
+            offset,
+        )
+        .await
+        {
+            Ok(val) => val,
+            Err(err) => {
+                let error_msg = format!("Error in Reqwest: {}", err);
+                return Err(error_msg);
+            }
+        };
+
+        // Deserialize the response
+        let json_res = match res.json::<SpotifyResponse<PlaylistTracksData>>().await {
+            Ok(val) => val,
+            Err(err) => {
+                let error_msg = format!(
+                    "Error: Could not deserialize get_playlists response.\n{}",
+                    err
+                );
+                return Err(error_msg);
+            }
+        };
+
+        // Extract data from wrapper
+        let response_data: SpotifyData<PlaylistTracksData> = match json_res {
+            Success(data) => data,
+            Failure(data) => {
+                let ErrorData { status, message } = data.error;
+                let error_msg = format!("Error from Spotify: {} - \"{}\"", status, message);
+                return Err(error_msg);
+            }
+        };
+
+        // Filter the tracks' fields
+        let mut filtered_playlists: Vec<ReducedTrackData> = response_data
+            .items
+            .into_iter()
+            .map(|item| {
+                let PlaylistTracksData {
+                    artists,
+                    added_at,
+                    track,
+                    ..
+                } = item;
+
+                ReducedTrackData {
+                    id: track.id,
+                    name: track.name,
+                    added_at: added_at,
+                    artist: artists[0].name.to_owned(),
+                }
+            })
+            .collect();
+
+        // Collect the reduced data into a vector
+        filtered_data.tracks.append(&mut filtered_playlists);
+
+        // filtered_data.append(&mut filtered_playlists);
+        offset += limit;
+
+        // Break when the API signals that we have traversed all liked tracks
+        if response_data.next.is_none() {
+            break;
+        }
+    }
+
+    Ok(filtered_data)
 }
