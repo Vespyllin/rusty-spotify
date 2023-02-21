@@ -7,7 +7,7 @@ use std::{
     time::Duration,
 };
 
-use crate::backup::{dump_data, web_interface::pull_playlist_tracks, ReducedPlaylist};
+use crate::backup::{dump_data, web_interface::pull_playlist_tracks, ReducedData, ReducedPlaylist};
 
 pub mod backup;
 mod fs_handler;
@@ -37,7 +37,7 @@ async fn main() {
     };
     cls();
 
-    let access_token = "BQBmgoxruHLd_MrxnTSnuTz0dvOT36XcpYrdfi4hPLq8wT-rgAH8KYHw51noy1hgW30uxowlM2we3TCQEqxmWo-qnt1SWhWbZQ9G4JheFfOlyBwuNFt7h1-zkTh0q_ShXJUmmQG4d0no_vdhMl4LEAsoDJ4wV_J8z82KTqIOvnRAkXVdu3cMz-UCHhnpxm7hoLyECQ";
+    let access_token = "BQAF9ljGyDG4tDeDcwcpKTwiIyVm8bHdq4hEso1TV5DylcXLMogZEoC9kYBtMvoAXvwUPKCnVcpSStbiAls6_6YTPG47N6_04qThuloMa0gcUwm4Nl8JNg3XCDYJXObr5vpzLs5ldOvc9pXDyi2oCuJ9U65CjHJSk-R-Gu_TseXPdUhKeMmWhQs9xysNNqxBFuwEUA";
 
     match backup_mode {
         Mode::Backup => {
@@ -77,16 +77,16 @@ async fn main() {
                     Ok(val) => {
                         println!("Pulled playlists!");
 
-                        let mut playlists_backup: Vec<ReducedPlaylist> = vec![];
+                        let mut playlists_backup: Vec<ReducedData> = vec![];
 
                         for playlist_metadata in val {
                             match pull_playlist_tracks(access_token, &playlist_metadata.id).await {
                                 Ok(reduced_tracks) => {
                                     println!("pulled {}", playlist_metadata.name);
-                                    playlists_backup.push(ReducedPlaylist {
+                                    playlists_backup.push(ReducedData::Playlists(ReducedPlaylist {
                                         meta: playlist_metadata,
                                         tracks: reduced_tracks,
-                                    })
+                                    }))
                                 }
                                 Err(e) => {
                                     println!(

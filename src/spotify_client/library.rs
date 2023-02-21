@@ -8,9 +8,9 @@ use reqwest::{Error, RequestBuilder, Response};
 use super::SPOTIFY_LIBRARY_URL;
 
 pub async fn get_liked_tracks(
-    access_token: &str,
-    limit: usize,
-    offset: usize,
+    access_token: String,
+    limit: u64,
+    offset: u64,
 ) -> Result<Response, reqwest::Error> {
     let client = reqwest::Client::new();
 
@@ -28,9 +28,9 @@ pub async fn get_liked_tracks(
 }
 
 pub async fn get_saved_albums(
-    access_token: &str,
-    limit: usize,
-    offset: usize,
+    access_token: String,
+    limit: u64,
+    offset: u64,
 ) -> Result<Response, reqwest::Error> {
     let client = reqwest::Client::new();
 
@@ -48,9 +48,9 @@ pub async fn get_saved_albums(
 }
 
 pub async fn get_playlists(
-    access_token: &str,
-    limit: usize,
-    offset: usize,
+    access_token: String,
+    limit: u64,
+    offset: u64,
 ) -> Result<Response, reqwest::Error> {
     let client = reqwest::Client::new();
 

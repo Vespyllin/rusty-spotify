@@ -15,10 +15,10 @@ pub struct ReducedAlbum {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ReducedTrack {
-    pub id: String,
-    pub name: String,
-    pub artist: String,
-    pub added_at: String,
+    pub id: Option<String>,
+    pub name: Option<String>,
+    pub artist: Option<String>,
+    pub added_at: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -37,10 +37,11 @@ pub struct ReducedPlaylistMetadata {
 }
 
 #[derive(Serialize, Debug)]
+#[serde(untagged)]
 pub enum ReducedData {
     Track(ReducedTrack),
     Album(ReducedAlbum),
-    Playlist(ReducedPlaylist),
+    Playlists(ReducedPlaylist),
 }
 
 pub type BackupData = Vec<ReducedData>;
@@ -57,7 +58,7 @@ fn get_hash(data: &str) -> String {
     )
 }
 
-pub fn dump_data<T: Serialize>(destination_dir: &str, data: &Vec<T>) -> Result<String, String> {
+pub fn dump_data(destination_dir: &str, data: &Vec<ReducedData>) -> Result<String, String> {
     let json_data = match serde_json::to_string_pretty(&data) {
         Ok(val) => val,
         Err(_) => return Err("Could not serialize backup data".to_string()),
