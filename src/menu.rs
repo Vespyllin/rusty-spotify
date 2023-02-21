@@ -6,8 +6,8 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, is_raw_mode_enabled},
 };
 
-pub mod backup_menu;
-pub mod main_menu;
+pub mod backup;
+pub mod main;
 
 pub enum Mode {
     Backup,

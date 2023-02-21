@@ -1,50 +1,8 @@
-pub mod web_interface;
-
-use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use crate::fs_handler::{get_latest_json, write_data};
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ReducedAlbum {
-    pub id: String,
-    pub name: String,
-    pub artist: String,
-    pub added_at: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ReducedTrack {
-    pub id: Option<String>,
-    pub name: Option<String>,
-    pub artist: Option<String>,
-    pub added_at: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ReducedPlaylist {
-    pub meta: ReducedPlaylistMetadata,
-
-    pub tracks: Vec<ReducedTrack>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ReducedPlaylistMetadata {
-    pub id: String,
-    pub name: String,
-    pub description: Option<String>,
-    pub owner_display_name: String,
-}
-
-#[derive(Serialize, Debug)]
-#[serde(untagged)]
-pub enum ReducedData {
-    Track(ReducedTrack),
-    Album(ReducedAlbum),
-    Playlists(ReducedPlaylist),
-}
-
-pub type BackupData = Vec<ReducedData>;
+use super::BackupData;
 
 fn get_hash(data: &str) -> String {
     format!(
@@ -58,7 +16,7 @@ fn get_hash(data: &str) -> String {
     )
 }
 
-pub fn dump_data(destination_dir: &str, data: &Vec<ReducedData>) -> Result<String, String> {
+pub fn dump_data(destination_dir: &str, data: &BackupData) -> Result<String, String> {
     let json_data = match serde_json::to_string_pretty(&data) {
         Ok(val) => val,
         Err(_) => return Err("Could not serialize backup data".to_string()),

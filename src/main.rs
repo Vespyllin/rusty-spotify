@@ -1,16 +1,19 @@
-use backup::web_interface::{pull_albums, pull_liked_tracks, pull_playlists};
 use crossterm::event::read;
-use menu::{backup_menu, cls, hide_cursor, main_menu, reset_terminal, Mode};
+use interface::{
+    fs::dump_data,
+    spotify::{pull_albums, pull_liked_tracks, pull_playlists},
+};
+use menu::{backup, cls, hide_cursor, main, reset_terminal, Mode};
 use std::{
     process::exit,
     thread::{self},
     time::Duration,
 };
 
-use crate::backup::{dump_data, web_interface::pull_playlist_tracks, ReducedData, ReducedPlaylist};
+use crate::interface::{spotify::pull_playlist_tracks, ReducedData, ReducedPlaylist};
 
-pub mod backup;
 mod fs_handler;
+pub mod interface;
 pub mod menu;
 pub mod spotify_client;
 
@@ -31,7 +34,7 @@ async fn main() {
         _ = read().expect("failed to read input. main");
     }
 
-    let backup_mode: Mode = match main_menu::menu() {
+    let backup_mode: Mode = match main::menu() {
         Some(val) => val,
         _ => return exit_proc(),
     };
@@ -41,7 +44,7 @@ async fn main() {
 
     match backup_mode {
         Mode::Backup => {
-            let selection = match backup_menu::menu() {
+            let selection = match backup::menu() {
                 Some(val) => val,
                 None => return exit_proc(),
             };
