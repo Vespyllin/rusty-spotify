@@ -31,11 +31,7 @@ pub fn reset_cursor() {
 
 pub fn cls() {
     if cfg!(windows) {
-        Command::new("cmd")
-            .arg("/C")
-            .arg("cls")
-            .status()
-            .expect("cls failed to run");
+        Command::new("cmd").arg("/C").arg("cls").status().expect("cls failed to run");
     } else {
         execute!(stdout(), Print("\x1B[2J\x1B[1;1H")).expect("cls");
     }

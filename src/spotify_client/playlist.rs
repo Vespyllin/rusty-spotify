@@ -2,12 +2,7 @@ use reqwest::Response;
 
 const SPOTIFY_PLAYLIST_URL: &str = "https://api.spotify.com/v1/playlists";
 
-pub async fn get_playlist_data(
-    id: &str,
-    access_token: &str,
-    limit: usize,
-    offset: usize,
-) -> Result<Response, reqwest::Error> {
+pub async fn get_playlist_data(id: &str, access_token: &str, limit: usize, offset: usize) -> Result<Response, reqwest::Error> {
     let client = reqwest::Client::new();
 
     let req_url = format!("{}/{}/tracks", SPOTIFY_PLAYLIST_URL, id);

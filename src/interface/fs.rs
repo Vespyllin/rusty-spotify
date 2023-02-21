@@ -68,8 +68,7 @@ pub fn get_latest_json(given_path: &str) -> Result<Option<String>, String> {
             match fs::read_to_string(&latest_json_path) {
                 Ok(val) => Ok(Some(val)),
                 Err(_) => {
-                    let error_msg =
-                        format!("Could not read contents of file at {}", &latest_json_path);
+                    let error_msg = format!("Could not read contents of file at {}", &latest_json_path);
                     return Err(error_msg);
                 }
             }
@@ -96,12 +95,7 @@ pub fn write_data(destination_dir: &str, title: &str, data: &str) -> Result<(), 
 fn get_hash(data: &str) -> String {
     format!(
         "{:x}",
-        Sha256::digest(
-            data.chars()
-                .filter(|c| !c.is_whitespace())
-                .collect::<String>()
-                .as_bytes()
-        )
+        Sha256::digest(data.chars().filter(|c| !c.is_whitespace()).collect::<String>().as_bytes())
     )
 }
 
@@ -122,17 +116,8 @@ pub fn dump_data(destination_dir: &str, data: &BackupData) -> Result<String, Str
         return Ok("Existing backup is up to date.".to_owned());
     }
 
-    match write_data(
-        destination_dir,
-        &format!("{}.json", &new_hash[5..15]),
-        &json_data,
-    ) {
+    match write_data(destination_dir, &format!("{}.json", &new_hash[5..15]), &json_data) {
         Ok(_) => return Ok("Successfully backed up data".to_owned()),
-        Err(e) => {
-            return Err(format!(
-                "Failed to backup data to {}.\n{}",
-                destination_dir, e
-            ))
-        }
+        Err(e) => return Err(format!("Failed to backup data to {}.\n{}", destination_dir, e)),
     }
 }

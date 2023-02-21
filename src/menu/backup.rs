@@ -11,35 +11,25 @@ use super::{reset_cursor, Choice};
 fn print_menu(selected: &mut Vec<bool>) {
     let options = vec!["Liked tracks.", "Saved albums.", "Saved playlists."];
 
-    assert_eq!(
-        selected.len(),
-        options.len(),
-        "Selection and options vectors are not of the same length."
-    );
+    assert_eq!(selected.len(), options.len(), "Selection and options vectors are not of the same length.");
 
     sep();
 
     let prompt = "Select which option/s to export to JSON.";
     let prompt_len: usize = prompt.len() - 9;
 
-    let even_space = (0..((WIDTH - prompt_len) / 2) - 1)
-        .map(|_| ' ')
-        .collect::<String>();
+    let even_space = (0..((WIDTH - prompt_len) / 2) - 1).map(|_| ' ').collect::<String>();
 
     println!("{}{}\n", even_space, prompt.bold());
 
-    selected
-        .iter()
-        .zip(options.iter())
-        .enumerate()
-        .for_each(|(i, (highlight, option))| {
-            let prompt = format!("{}. {}", (i + 1), option);
-            if *highlight {
-                println!("{}", prompt.black().on_green());
-            } else {
-                println!("{}", prompt);
-            }
-        });
+    selected.iter().zip(options.iter()).enumerate().for_each(|(i, (highlight, option))| {
+        let prompt = format!("{}. {}", (i + 1), option);
+        if *highlight {
+            println!("{}", prompt.black().on_green());
+        } else {
+            println!("{}", prompt);
+        }
+    });
 
     println!("q. Quit.");
 
@@ -58,10 +48,7 @@ fn handle_input() -> Choice {
             ..
         }) => choice = Choice::Exit,
 
-        Event::Key(KeyEvent {
-            code: KeyCode::Char(x),
-            ..
-        }) => match x {
+        Event::Key(KeyEvent { code: KeyCode::Char(x), .. }) => match x {
             '1' => choice = Choice::Option(1),
 
             '2' => choice = Choice::Option(2),
@@ -73,10 +60,7 @@ fn handle_input() -> Choice {
             _ => choice = Choice::Default,
         },
 
-        Event::Key(KeyEvent {
-            code: KeyCode::Enter,
-            ..
-        }) => choice = Choice::Submit,
+        Event::Key(KeyEvent { code: KeyCode::Enter, .. }) => choice = Choice::Submit,
 
         _ => choice = Choice::Default,
     }

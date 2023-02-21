@@ -60,10 +60,7 @@ async fn main() {
             let mut logs: Vec<LogType> = vec![];
 
             if selection[0] {
-                push_print(
-                    LogType::Status("Pulling liked tracks.".to_owned()),
-                    &mut logs,
-                );
+                push_print(LogType::Status("Pulling liked tracks.".to_owned()), &mut logs);
 
                 match pull_liked_tracks(access_token).await {
                     Ok(val) => match dump_data("./tracks", &val) {
@@ -75,10 +72,7 @@ async fn main() {
             }
 
             if selection[1] {
-                push_print(
-                    LogType::Status("Pulling liked albums.".to_owned()),
-                    &mut logs,
-                );
+                push_print(LogType::Status("Pulling liked albums.".to_owned()), &mut logs);
                 match pull_albums(access_token).await {
                     Ok(val) => match dump_data("./albums", &val) {
                         Ok(msg) => push_print(LogType::Completed(msg.to_owned()), &mut logs),
@@ -89,33 +83,19 @@ async fn main() {
             }
 
             if selection[2] {
-                push_print(
-                    LogType::Status("Pulling list of saved playlists...".to_owned()),
-                    &mut logs,
-                );
+                push_print(LogType::Status("Pulling list of saved playlists...".to_owned()), &mut logs);
 
                 match pull_playlists(access_token).await {
                     Ok(val) => {
-                        push_print(
-                            LogType::Completed("Acquired list of saved playlists".to_owned()),
-                            &mut logs,
-                        );
+                        push_print(LogType::Completed("Acquired list of saved playlists".to_owned()), &mut logs);
                         let mut playlists_backup: Vec<ReducedData> = vec![];
 
                         for metadata in val {
-                            push_print(
-                                LogType::Status(format!("Pulling {}.", metadata.name).to_owned()),
-                                &mut logs,
-                            );
+                            push_print(LogType::Status(format!("Pulling {}.", metadata.name).to_owned()), &mut logs);
 
                             match pull_playlist_tracks(access_token, &metadata.id).await {
                                 Ok(reduced_tracks) => {
-                                    push_print(
-                                        LogType::Completed(
-                                            format!("Pulled {}", metadata.name).to_owned(),
-                                        ),
-                                        &mut logs,
-                                    );
+                                    push_print(LogType::Completed(format!("Pulled {}", metadata.name).to_owned()), &mut logs);
 
                                     playlists_backup.push(ReducedData::Playlists(ReducedPlaylist {
                                         meta: metadata,
@@ -124,13 +104,7 @@ async fn main() {
                                 }
                                 Err(e) => {
                                     push_print(
-                                        LogType::Error(
-                                            format!(
-                                                "Could not backup playlist {}\n{}",
-                                                metadata.name, e
-                                            )
-                                            .to_owned(),
-                                        ),
+                                        LogType::Error(format!("Could not backup playlist {}\n{}", metadata.name, e).to_owned()),
                                         &mut logs,
                                     );
                                 }

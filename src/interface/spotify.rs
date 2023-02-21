@@ -6,20 +6,14 @@ use serde::de::DeserializeOwned;
 use crate::spotify_client::{
     library::{get_liked_tracks, get_playlists, get_saved_albums},
     playlist::get_playlist_data,
-    Album, AlbumData, ErrorData, LikedTrackData, PlaylistMetadata, PlaylistTracksData, SpotifyData,
-    SpotifyResponse,
+    Album, AlbumData, ErrorData, LikedTrackData, PlaylistMetadata, PlaylistTracksData, SpotifyData, SpotifyResponse,
     SpotifyResponse::{Failure, Success},
     Track,
 };
 
 use super::{BackupData, ReducedAlbum, ReducedData, ReducedPlaylistMetadata, ReducedTrack};
 
-async fn pull_parse<T, Fut, R: DeserializeOwned>(
-    access_token: String,
-    limit: u64,
-    offset: u64,
-    func: T,
-) -> Result<SpotifyData<R>, String>
+async fn pull_parse<T, Fut, R: DeserializeOwned>(access_token: String, limit: u64, offset: u64, func: T) -> Result<SpotifyData<R>, String>
 where
     T: Fn(String, u64, u64) -> Fut,
     Fut: Future<Output = Result<Response, reqwest::Error>>,
@@ -42,7 +36,6 @@ where
     };
 
     // Extract data from wrapper
-    // let response_data: SpotifyData<R> =
     return match json_res {
         Success(data) => Ok(data),
         Failure(data) => {
@@ -69,10 +62,11 @@ pub async fn pull_liked_tracks(access_token: &str) -> Result<BackupData, String>
             .into_iter()
             .map(|item: LikedTrackData| {
                 let Track { id, name, artists } = item.track;
+
                 return ReducedData::Track(ReducedTrack {
                     added_at: Some(item.added_at),
                     id: id.or(Some("local".to_owned())),
-                    name: name,
+                    name,
                     artist: artists[0].name.to_owned(),
                 });
             })
@@ -106,14 +100,12 @@ pub async fn pull_albums(access_token: &str) -> Result<BackupData, String> {
             .items
             .into_iter()
             .map(|item: AlbumData| {
-                let Album {
-                    id, name, artists, ..
-                } = item.album;
+                let Album { id, name, artists, .. } = item.album;
 
                 ReducedData::Album(ReducedAlbum {
                     id,
                     name,
-                    artist: artists[0].name.to_owned().unwrap_or("local".to_owned()),
+                    artist: artists[0].name.to_owned().unwrap(),
                     added_at: item.added_at,
                 })
             })
@@ -177,10 +169,7 @@ pub async fn pull_playlists(access_token: &str) -> Result<Vec<ReducedPlaylistMet
     Ok(filtered_data)
 }
 
-pub async fn pull_playlist_tracks(
-    access_token: &str,
-    playlist_id: &str,
-) -> Result<Vec<ReducedTrack>, String> {
+pub async fn pull_playlist_tracks(access_token: &str, playlist_id: &str) -> Result<Vec<ReducedTrack>, String> {
     let mut filtered_data: Vec<ReducedTrack> = vec![];
 
     let limit = 50;
@@ -201,10 +190,7 @@ pub async fn pull_playlist_tracks(
         let json_res: SpotifyResponse<PlaylistTracksData> = match res.json().await {
             Ok(val) => val,
             Err(err) => {
-                let error_msg = format!(
-                    "Error: Could not deserialize get_playlists response.\n{}",
-                    err
-                );
+                let error_msg = format!("Error: Could not deserialize get_playlists response.\n{}", err);
                 return Err(error_msg);
             }
         };
@@ -222,9 +208,7 @@ pub async fn pull_playlist_tracks(
             .items
             .into_iter()
             .map(|item| {
-                let PlaylistTracksData {
-                    added_at, track, ..
-                } = item;
+                let PlaylistTracksData { added_at, track, .. } = item;
 
                 ReducedTrack {
                     id: track.id,

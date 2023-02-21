@@ -7,11 +7,7 @@ use reqwest::{Error, RequestBuilder, Response};
 
 const SPOTIFY_LIBRARY_URL: &str = "https://api.spotify.com/v1/me";
 
-pub async fn get_liked_tracks(
-    access_token: String,
-    limit: u64,
-    offset: u64,
-) -> Result<Response, reqwest::Error> {
+pub async fn get_liked_tracks(access_token: String, limit: u64, offset: u64) -> Result<Response, reqwest::Error> {
     let client = reqwest::Client::new();
 
     let req_url = format!("{}/tracks", SPOTIFY_LIBRARY_URL);
@@ -27,11 +23,7 @@ pub async fn get_liked_tracks(
         .await;
 }
 
-pub async fn get_saved_albums(
-    access_token: String,
-    limit: u64,
-    offset: u64,
-) -> Result<Response, reqwest::Error> {
+pub async fn get_saved_albums(access_token: String, limit: u64, offset: u64) -> Result<Response, reqwest::Error> {
     let client = reqwest::Client::new();
 
     let req_url = format!("{}/albums", SPOTIFY_LIBRARY_URL);
@@ -47,17 +39,11 @@ pub async fn get_saved_albums(
         .await;
 }
 
-pub async fn get_playlists(
-    access_token: String,
-    limit: u64,
-    offset: u64,
-) -> Result<Response, reqwest::Error> {
+pub async fn get_playlists(access_token: String, limit: u64, offset: u64) -> Result<Response, reqwest::Error> {
     let client = reqwest::Client::new();
 
     let req_url = format!("{}/playlists", SPOTIFY_LIBRARY_URL);
     let params = [("limit", limit.to_string()), ("offset", offset.to_string())];
-
-    // println!("{:#?}", req.try_clone().unwrap().build().unwrap().url());
 
     return client
         .get(req_url)

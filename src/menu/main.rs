@@ -11,17 +11,10 @@ use super::{reset_cursor, Choice, Mode};
 fn print_menu() {
     sep();
 
-    let logo = format!(
-        "{} {} {}",
-        "Welcome to loveless'".bold(),
-        "Spotify".green().bold(),
-        "backup tool!".bold()
-    );
+    let logo = format!("{} {} {}", "Welcome to loveless'".bold(), "Spotify".green().bold(), "backup tool!".bold());
 
     let logo_len: usize = logo.len() - ((9 * 3) + 8);
-    let even_space = (0..((WIDTH - logo_len) / 2) - 1)
-        .map(|_| ' ')
-        .collect::<String>();
+    let even_space = (0..((WIDTH - logo_len) / 2) - 1).map(|_| ' ').collect::<String>();
 
     println!("{}{}\n", even_space, logo);
 
@@ -45,10 +38,7 @@ fn handle_input() -> Choice {
             ..
         }) => choice = Choice::Exit,
 
-        Event::Key(KeyEvent {
-            code: KeyCode::Char(x),
-            ..
-        }) => match x {
+        Event::Key(KeyEvent { code: KeyCode::Char(x), .. }) => match x {
             '1' => choice = Choice::Option(1),
 
             '2' => choice = Choice::Option(2),
