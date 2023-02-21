@@ -3,19 +3,24 @@ use interface::{
     fs::dump_data,
     spotify::{pull_albums, pull_liked_tracks, pull_playlists},
 };
-use menu::{backup, cls, hide_cursor, main, reset_terminal, Mode};
+use menu::{
+    backup, cls, hide_cursor,
+    log::{push_print, LogType},
+    main, reset_terminal, Mode,
+};
 use std::{
     process::exit,
     thread::{self},
     time::Duration,
 };
 
+// use uuid::Uuid;
+
 use crate::interface::{spotify::pull_playlist_tracks, ReducedData, ReducedPlaylist};
 
-mod fs_handler;
-pub mod interface;
-pub mod menu;
-pub mod spotify_client;
+mod interface;
+mod menu;
+mod spotify_client;
 
 fn exit_proc() {
     cls();
@@ -40,7 +45,9 @@ async fn main() {
     };
     cls();
 
-    let access_token = "BQAF9ljGyDG4tDeDcwcpKTwiIyVm8bHdq4hEso1TV5DylcXLMogZEoC9kYBtMvoAXvwUPKCnVcpSStbiAls6_6YTPG47N6_04qThuloMa0gcUwm4Nl8JNg3XCDYJXObr5vpzLs5ldOvc9pXDyi2oCuJ9U65CjHJSk-R-Gu_TseXPdUhKeMmWhQs9xysNNqxBFuwEUA";
+    // let uuid = Uuid::new_v4();
+
+    let access_token = "BQB5c4NUtZaEfzo04YtrmrU8POkIPwfM6r2rRs234ijLfCs8ZwDlZFT0-aO5zok91nLSsrR1ylv9UoR0VDFmESTgK4JA8kzFscHu9jVxOhvtEIBVLinbWZWOUX2eYp5Qx0mn9EH3KR2o9osHmixC8SdWPCWJGY5N4eL4rloIutIZnYZg5wIRM8vZ7Ovr6ft-tsadKA";
 
     match backup_mode {
         Mode::Backup => {
@@ -50,68 +57,92 @@ async fn main() {
             };
             cls();
 
+            let mut logs: Vec<LogType> = vec![];
+
             if selection[0] {
+                push_print(
+                    LogType::Status("Pulling liked tracks.".to_owned()),
+                    &mut logs,
+                );
+
                 match pull_liked_tracks(access_token).await {
                     Ok(val) => match dump_data("./tracks", &val) {
-                        Ok(msg) => println!("Liked Tracks: {}", msg),
-                        Err(msg) => println!("Liked Tracks: {}", msg),
+                        Ok(msg) => push_print(LogType::Completed(msg.to_owned()), &mut logs),
+                        Err(msg) => push_print(LogType::Error(msg.to_owned()), &mut logs),
                     },
-                    Err(e) => {
-                        println!("Could not backup liked tracks\n{}", e);
-                    }
+                    Err(e) => push_print(LogType::Error(e.to_owned()), &mut logs),
                 };
             }
 
             if selection[1] {
+                push_print(
+                    LogType::Status("Pulling liked albums.".to_owned()),
+                    &mut logs,
+                );
                 match pull_albums(access_token).await {
                     Ok(val) => match dump_data("./albums", &val) {
-                        Ok(msg) => println!("Albums: {}", msg),
-                        Err(msg) => println!("Albums: {}", msg),
+                        Ok(msg) => push_print(LogType::Completed(msg.to_owned()), &mut logs),
+                        Err(msg) => push_print(LogType::Error(msg.to_owned()), &mut logs),
                     },
-                    Err(e) => {
-                        println!("Could not backup albums\n{}", e);
-                        return exit_proc();
-                    }
+                    Err(e) => push_print(LogType::Error(e.to_owned()), &mut logs),
                 }
             }
 
             if selection[2] {
+                push_print(
+                    LogType::Status("Pulling list of saved playlists...".to_owned()),
+                    &mut logs,
+                );
+
                 match pull_playlists(access_token).await {
                     Ok(val) => {
-                        println!("Pulled playlists!");
-
+                        push_print(
+                            LogType::Completed("Acquired list of saved playlists".to_owned()),
+                            &mut logs,
+                        );
                         let mut playlists_backup: Vec<ReducedData> = vec![];
 
-                        for playlist_metadata in val {
-                            match pull_playlist_tracks(access_token, &playlist_metadata.id).await {
+                        for metadata in val {
+                            push_print(
+                                LogType::Status(format!("Pulling {}.", metadata.name).to_owned()),
+                                &mut logs,
+                            );
+
+                            match pull_playlist_tracks(access_token, &metadata.id).await {
                                 Ok(reduced_tracks) => {
-                                    println!("pulled {}", playlist_metadata.name);
+                                    push_print(
+                                        LogType::Completed(
+                                            format!("Pulled {}", metadata.name).to_owned(),
+                                        ),
+                                        &mut logs,
+                                    );
+
                                     playlists_backup.push(ReducedData::Playlists(ReducedPlaylist {
-                                        meta: playlist_metadata,
+                                        meta: metadata,
                                         tracks: reduced_tracks,
                                     }))
                                 }
                                 Err(e) => {
-                                    println!(
-                                        "Could not backup playlist {}\n{}",
-                                        playlist_metadata.name, e
+                                    push_print(
+                                        LogType::Error(
+                                            format!(
+                                                "Could not backup playlist {}\n{}",
+                                                metadata.name, e
+                                            )
+                                            .to_owned(),
+                                        ),
+                                        &mut logs,
                                     );
                                 }
                             }
                         }
 
                         match dump_data("./playlists", &playlists_backup) {
-                            Ok(val) => {
-                                println!("good {}", val)
-                            }
-                            Err(e) => {
-                                println!("bad {}", e)
-                            }
+                            Ok(msg) => push_print(LogType::Completed(msg.to_owned()), &mut logs),
+                            Err(msg) => push_print(LogType::Error(msg.to_owned()), &mut logs),
                         }
                     }
-                    Err(e) => {
-                        println!("Could not get playlists\n{}", e);
-                    }
+                    Err(msg) => push_print(LogType::Error(msg.to_owned()), &mut logs),
                 };
             }
         }

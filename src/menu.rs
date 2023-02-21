@@ -7,6 +7,7 @@ use crossterm::{
 };
 
 pub mod backup;
+pub mod log;
 pub mod main;
 
 pub enum Mode {
@@ -15,7 +16,7 @@ pub enum Mode {
 }
 
 pub enum Choice {
-    Choice(usize),
+    Option(usize),
     Exit,
     Submit,
     Default,

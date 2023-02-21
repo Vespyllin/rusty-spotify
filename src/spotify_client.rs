@@ -1,8 +1,5 @@
 use serde::Deserialize;
 
-const SPOTIFY_LIBRARY_URL: &str = "https://api.spotify.com/v1/me";
-const SPOTIFY_PLAYLIST_URL: &str = "https://api.spotify.com/v1/playlists";
-
 pub mod library;
 pub mod playlist;
 

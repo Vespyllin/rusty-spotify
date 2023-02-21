@@ -5,7 +5,7 @@ use std::future::Future;
 
 use reqwest::{Error, RequestBuilder, Response};
 
-use super::SPOTIFY_LIBRARY_URL;
+const SPOTIFY_LIBRARY_URL: &str = "https://api.spotify.com/v1/me";
 
 pub async fn get_liked_tracks(
     access_token: String,

@@ -62,11 +62,11 @@ fn handle_input() -> Choice {
             code: KeyCode::Char(x),
             ..
         }) => match x {
-            '1' => choice = Choice::Choice(1),
+            '1' => choice = Choice::Option(1),
 
-            '2' => choice = Choice::Choice(2),
+            '2' => choice = Choice::Option(2),
 
-            '3' => choice = Choice::Choice(3),
+            '3' => choice = Choice::Option(3),
 
             'q' => choice = Choice::Exit,
 
@@ -104,7 +104,7 @@ pub fn menu() -> Option<Vec<bool>> {
                     break;
                 }
             }
-            Choice::Choice(x) => selection[x - 1] = !selection[x - 1],
+            Choice::Option(x) => selection[x - 1] = !selection[x - 1],
             Choice::Exit => return None,
             _ => {}
         }

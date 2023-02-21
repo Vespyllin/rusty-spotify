@@ -49,9 +49,9 @@ fn handle_input() -> Choice {
             code: KeyCode::Char(x),
             ..
         }) => match x {
-            '1' => choice = Choice::Choice(1),
+            '1' => choice = Choice::Option(1),
 
-            '2' => choice = Choice::Choice(2),
+            '2' => choice = Choice::Option(2),
 
             'q' => choice = Choice::Exit,
 
@@ -76,7 +76,7 @@ pub fn menu() -> Option<Mode> {
         print_menu();
 
         match handle_input() {
-            Choice::Choice(x) => {
+            Choice::Option(x) => {
                 match x {
                     1 => return Some(Mode::Backup),
                     2 => return Some(Mode::Recover),

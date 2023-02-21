@@ -4,8 +4,8 @@ use reqwest::Response;
 use serde::de::DeserializeOwned;
 
 use crate::spotify_client::{
-    self,
-    library::{get_liked_tracks, get_saved_albums},
+    library::{get_liked_tracks, get_playlists, get_saved_albums},
+    playlist::get_playlist_data,
     Album, AlbumData, ErrorData, LikedTrackData, PlaylistMetadata, PlaylistTracksData, SpotifyData,
     SpotifyResponse,
     SpotifyResponse::{Failure, Success},
@@ -140,7 +140,7 @@ pub async fn pull_playlists(access_token: &str) -> Result<Vec<ReducedPlaylistMet
 
     // Loop until the library is fully traversed
     loop {
-        let res = pull_parse(access_token.to_owned(), limit, offset, get_saved_albums).await?;
+        let res = pull_parse(access_token.to_owned(), limit, offset, get_playlists).await?;
 
         // Filter the tracks' fields
         let mut filtered_playlists: Vec<ReducedPlaylistMetadata> = res
@@ -189,14 +189,7 @@ pub async fn pull_playlist_tracks(
     // Loop until the library is fully traversed
     loop {
         // Make a request for the user's albums
-        let res = match spotify_client::playlist::get_playlist_data(
-            playlist_id,
-            access_token,
-            limit,
-            offset,
-        )
-        .await
-        {
+        let res = match get_playlist_data(playlist_id, access_token, limit, offset).await {
             Ok(val) => val,
             Err(err) => {
                 let error_msg = format!("Error in Reqwest: {}", err);

@@ -1,6 +1,6 @@
 use reqwest::Response;
 
-use super::SPOTIFY_PLAYLIST_URL;
+const SPOTIFY_PLAYLIST_URL: &str = "https://api.spotify.com/v1/playlists";
 
 pub async fn get_playlist_data(
     id: &str,
