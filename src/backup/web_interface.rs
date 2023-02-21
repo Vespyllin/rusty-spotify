@@ -5,7 +5,7 @@ use crate::spotify_client::{
     Track,
 };
 
-use super::{BackupData, ReducedAlbumData, ReducedData, ReducedPlaylistMetadata, ReducedTrackData};
+use super::{BackupData, ReducedAlbum, ReducedData, ReducedPlaylistMetadata, ReducedTrack};
 
 pub async fn pull_liked_tracks(access_token: &str) -> Result<BackupData, String> {
     let mut filtered_data: BackupData = vec![];
@@ -26,7 +26,7 @@ pub async fn pull_liked_tracks(access_token: &str) -> Result<BackupData, String>
         };
 
         // Deserialize the response
-        let json_res = match res.json::<SpotifyResponse<LikedTrackData>>().await {
+        let json_res: SpotifyResponse<LikedTrackData> = match res.json().await {
             Ok(val) => val,
             Err(err) => {
                 let error_msg =
@@ -51,7 +51,7 @@ pub async fn pull_liked_tracks(access_token: &str) -> Result<BackupData, String>
             .into_iter()
             .map(|item| {
                 let Track { id, name, artists } = item.track;
-                return ReducedData::ReducedTrack(ReducedTrackData {
+                return ReducedData::Track(ReducedTrack {
                     added_at: item.added_at,
                     id: id.unwrap_or("local".to_owned()),
                     name: name.unwrap_or("local".to_owned()),
@@ -119,7 +119,7 @@ pub async fn pull_albums(access_token: &str) -> Result<BackupData, String> {
                 let Album {
                     id, name, artists, ..
                 } = item.album;
-                ReducedData::ReducedAlbum(ReducedAlbumData {
+                ReducedData::Album(ReducedAlbum {
                     id,
                     name,
                     artist: artists[0].name.to_owned().unwrap_or("local".to_owned()),
@@ -159,7 +159,7 @@ pub async fn pull_playlists(access_token: &str) -> Result<Vec<ReducedPlaylistMet
         };
 
         // Deserialize the response
-        let json_res = match res.json::<SpotifyResponse<PlaylistMetadata>>().await {
+        let json_res: SpotifyResponse<PlaylistMetadata> = match res.json().await {
             Ok(val) => val,
             Err(err) => {
                 let error_msg = format!(
@@ -218,8 +218,8 @@ pub async fn pull_playlists(access_token: &str) -> Result<Vec<ReducedPlaylistMet
 pub async fn pull_playlist_tracks(
     access_token: &str,
     playlist_id: &str,
-) -> Result<Vec<ReducedTrackData>, String> {
-    let mut filtered_data: Vec<ReducedTrackData> = vec![];
+) -> Result<Vec<ReducedTrack>, String> {
+    let mut filtered_data: Vec<ReducedTrack> = vec![];
 
     let limit = 50;
     let mut offset = 0;
@@ -243,7 +243,7 @@ pub async fn pull_playlist_tracks(
         };
 
         // Deserialize the response
-        let json_res = match res.json::<SpotifyResponse<PlaylistTracksData>>().await {
+        let json_res: SpotifyResponse<PlaylistTracksData> = match res.json().await {
             Ok(val) => val,
             Err(err) => {
                 let error_msg = format!(
@@ -263,7 +263,7 @@ pub async fn pull_playlist_tracks(
             }
         };
 
-        let mut filtered_playlists: Vec<ReducedTrackData> = response_data
+        let mut filtered_playlists: Vec<ReducedTrack> = response_data
             .items
             .into_iter()
             .map(|item| {
@@ -271,7 +271,7 @@ pub async fn pull_playlist_tracks(
                     added_at, track, ..
                 } = item;
 
-                ReducedTrackData {
+                ReducedTrack {
                     id: track.id.unwrap_or("local".to_owned()),
                     name: track.name.unwrap_or("local".to_owned()),
                     artist: track.artists[0]

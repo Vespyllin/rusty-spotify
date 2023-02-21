@@ -43,49 +43,15 @@ pub struct PlaylistMetadata {
 
 #[derive(Deserialize, Debug)]
 pub struct Artist {
-    pub genres: Option<Vec<String>>,
-
     pub id: Option<String>,
     pub name: Option<String>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct AlbumTrack {
-    pub id: Option<String>,
-    pub name: Option<String>,
-    pub track_number: Option<u64>,
-    pub artists: Vec<Artist>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct AlbumTrackData {
-    pub items: Vec<AlbumTrack>,
-
-    pub limit: u64,
-    pub offset: u64,
-    pub total: u64,
-
-    pub next: Option<String>,
-    pub previous: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Album {
     pub id: String,
     pub name: String,
-    pub release_date: String,
-    pub album_type: String,
 
-    pub images: Vec<Image>,
-
-    #[serde(rename = "type")]
-    pub _type: String,
-
-    pub total_tracks: u64,
-    pub tracks: AlbumTrackData,
-
-    pub genres: Vec<String>,
-    pub label: String,
     pub artists: Vec<Artist>,
 }
 

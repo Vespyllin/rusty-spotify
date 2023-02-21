@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 use crate::fs_handler::{get_latest_json, write_data};
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ReducedAlbumData {
+pub struct ReducedAlbum {
     pub id: String,
     pub name: String,
     pub artist: String,
@@ -14,7 +14,7 @@ pub struct ReducedAlbumData {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ReducedTrackData {
+pub struct ReducedTrack {
     pub id: String,
     pub name: String,
     pub artist: String,
@@ -22,10 +22,10 @@ pub struct ReducedTrackData {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ReducedPlaylistData {
+pub struct ReducedPlaylist {
     pub meta: ReducedPlaylistMetadata,
 
-    pub tracks: Vec<ReducedTrackData>,
+    pub tracks: Vec<ReducedTrack>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -38,9 +38,9 @@ pub struct ReducedPlaylistMetadata {
 
 #[derive(Serialize, Debug)]
 pub enum ReducedData {
-    ReducedTrack(ReducedTrackData),
-    ReducedAlbum(ReducedAlbumData),
-    ReducedPlaylist(ReducedPlaylistData),
+    Track(ReducedTrack),
+    Album(ReducedAlbum),
+    Playlist(ReducedPlaylist),
 }
 
 pub type BackupData = Vec<ReducedData>;

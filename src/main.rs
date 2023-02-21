@@ -7,7 +7,7 @@ use std::{
     time::Duration,
 };
 
-use crate::backup::{dump_data, web_interface::pull_playlist_tracks, ReducedPlaylistData};
+use crate::backup::{dump_data, web_interface::pull_playlist_tracks, ReducedPlaylist};
 
 pub mod backup;
 mod fs_handler;
@@ -77,13 +77,13 @@ async fn main() {
                     Ok(val) => {
                         println!("Pulled playlists!");
 
-                        let mut playlists_backup: Vec<ReducedPlaylistData> = vec![];
+                        let mut playlists_backup: Vec<ReducedPlaylist> = vec![];
 
                         for playlist_metadata in val {
                             match pull_playlist_tracks(access_token, &playlist_metadata.id).await {
                                 Ok(reduced_tracks) => {
                                     println!("pulled {}", playlist_metadata.name);
-                                    playlists_backup.push(ReducedPlaylistData {
+                                    playlists_backup.push(ReducedPlaylist {
                                         meta: playlist_metadata,
                                         tracks: reduced_tracks,
                                     })
