@@ -15,8 +15,8 @@ fn print_menu(selected: &mut Vec<bool>) {
 
     sep();
 
-    let prompt = "Select which option/s to export to JSON.";
-    let prompt_len: usize = prompt.len() - 9;
+    let prompt = "Select which option(s) to export to JSON.";
+    let prompt_len: usize = prompt.len();
 
     let even_space = (0..((WIDTH - prompt_len) / 2) - 1).map(|_| ' ').collect::<String>();
 

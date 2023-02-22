@@ -1,6 +1,8 @@
 use crossterm::style::Stylize;
 
-use super::cls;
+use crate::menu::WIDTH;
+
+use super::{cls, sep};
 
 pub enum LogType {
     Error(String),
@@ -9,7 +11,17 @@ pub enum LogType {
 }
 
 fn print(log: &Vec<LogType>) {
-    for msg in &log[(log.len().saturating_sub(5))..log.len()] {
+    sep();
+
+    let logo = format!("{}", "Status Logs".bold());
+    let logo_len: usize = logo.len();
+    let even_space = (0..((WIDTH - logo_len + 8) / 2) - 1).map(|_| ' ').collect::<String>();
+
+    println!("{}{}\n", even_space, logo);
+
+    let display_len = 4;
+
+    for msg in &log[(log.len().saturating_sub(display_len))..log.len()] {
         match msg {
             LogType::Status(val) => {
                 println!("{}", val);
@@ -22,6 +34,13 @@ fn print(log: &Vec<LogType>) {
             }
         }
     }
+
+    if log.len() < display_len {
+        for _ in 0..(display_len - log.len()) {
+            println!();
+        }
+    }
+    sep();
 }
 
 pub fn push_print(message: LogType, log: &mut Vec<LogType>) {

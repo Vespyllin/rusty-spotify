@@ -24,6 +24,8 @@ fn print_menu() {
 
     println!("q. Quit.");
 
+    println!();
+
     sep();
 }
 
