@@ -1,3 +1,4 @@
+use anyhow::{bail, Result};
 use sha2::{Digest, Sha256};
 
 use super::BackupData;
@@ -7,7 +8,7 @@ use std::{
     path::Path,
 };
 
-pub fn get_latest_json(given_path: &str) -> Result<Option<String>, String> {
+pub fn get_latest_json(given_path: &str) -> Result<Option<String>> {
     let path = Path::new(given_path);
 
     if !path.is_dir() {
@@ -16,17 +17,14 @@ pub fn get_latest_json(given_path: &str) -> Result<Option<String>, String> {
 
     let dir_items = match fs::read_dir(path) {
         Ok(val) => val,
-        Err(_) => {
-            let error_msg = format!("Could not traverse {}", given_path);
-            return Err(error_msg);
-        }
+        Err(_) => bail!(format!("Could not traverse {}", given_path)),
     };
 
     let latest_file_metadata = dir_items
         .map(|dir_result| {
             let item = match dir_result {
                 Ok(res) => res,
-                Err(_) => return None,
+                _ => return None,
             };
 
             let file_path = match item.path().to_str() {
@@ -42,12 +40,12 @@ pub fn get_latest_json(given_path: &str) -> Result<Option<String>, String> {
 
             let meta_data = match item.metadata() {
                 Ok(val) => val,
-                Err(_) => return None,
+                _ => return None,
             };
 
             let created_at = match meta_data.created() {
                 Ok(val) => val,
-                Err(_) => return None,
+                _ => return None,
             };
 
             return Some((created_at, file_path));
@@ -61,34 +59,31 @@ pub fn get_latest_json(given_path: &str) -> Result<Option<String>, String> {
             }
         });
 
-    match latest_file_metadata {
+    Ok(match latest_file_metadata {
         Some(val) => {
             let (_, latest_json_path) = val;
 
             match fs::read_to_string(&latest_json_path) {
-                Ok(val) => Ok(Some(val)),
-                Err(_) => {
-                    let error_msg = format!("Could not read contents of file at {}", &latest_json_path);
-                    return Err(error_msg);
-                }
+                Ok(val) => Some(val),
+                Err(_) => bail!(format!("Could not read contents of file at {}", &latest_json_path)),
             }
         }
-        None => Ok(None),
-    }
+        None => None,
+    })
 }
 
-pub fn write_data(destination_dir: &str, title: &str, data: &str) -> Result<(), String> {
+pub fn write_data(destination_dir: &str, title: &str, data: &str) -> Result<()> {
     let path = Path::new(destination_dir);
 
     if !path.is_dir() && fs::create_dir_all(destination_dir).is_err() {
-        return Err(format!("Could not create {}", destination_dir));
+        bail!(format!("Could not create {}", destination_dir));
     }
 
     let file_path = format!("{}/{}", destination_dir, title);
 
     match fs::write(&file_path, &data) {
         Ok(_) => Ok(()),
-        Err(_) => Err(format!("Could not write to {}", file_path)),
+        Err(_) => bail!(format!("Could not write to {}", file_path)),
     }
 }
 
@@ -99,10 +94,10 @@ fn get_hash(data: &str) -> String {
     )
 }
 
-pub fn dump_data(destination_dir: &str, data: &BackupData) -> Result<String, String> {
+pub fn dump_data(destination_dir: &str, data: &BackupData) -> Result<String> {
     let json_data = match serde_json::to_string_pretty(&data) {
         Ok(val) => val,
-        Err(_) => return Err("Could not serialize backup data.".to_owned()),
+        _ => bail!("Could not serialize backup data."),
     };
 
     let new_hash = get_hash(&json_data);
@@ -118,6 +113,6 @@ pub fn dump_data(destination_dir: &str, data: &BackupData) -> Result<String, Str
 
     match write_data(destination_dir, &format!("{}.json", &new_hash[5..15]), &json_data) {
         Ok(_) => return Ok(format!("Successfully backed up data to {}", destination_dir)),
-        Err(e) => return Err(format!("{}", e)),
+        Err(e) => bail!(e),
     }
 }

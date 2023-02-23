@@ -1,5 +1,6 @@
 use std::future::Future;
 
+use anyhow::{bail, Result};
 use reqwest::Response;
 use serde::de::DeserializeOwned;
 
@@ -13,26 +14,20 @@ use crate::spotify_client::{
 
 use super::{BackupData, ReducedAlbum, ReducedData, ReducedPlaylistMetadata, ReducedTrack};
 
-async fn pull_parse<T, Fut, R: DeserializeOwned>(access_token: String, limit: u64, offset: u64, func: T) -> Result<SpotifyData<R>, String>
+async fn pull_parse<T, Fut, R: DeserializeOwned>(access_token: String, limit: u64, offset: u64, func: T) -> Result<SpotifyData<R>>
 where
     T: Fn(String, u64, u64) -> Fut,
-    Fut: Future<Output = Result<Response, reqwest::Error>>,
+    Fut: Future<Output = Result<Response>>,
 {
     let res = match func(access_token, limit, offset).await {
         Ok(val) => val,
-        Err(err) => {
-            let error_msg = format!("Error in Reqwest: {}", err);
-            return Err(error_msg);
-        }
+        Err(err) => bail!(format!("Error making a request to Spotify: {}", err)),
     };
 
     // Deserialize the response
     let json_res: SpotifyResponse<R> = match res.json().await {
         Ok(val) => val,
-        Err(err) => {
-            let error_msg = format!("Error: Could not deserialize get_likes response.\n{}", err);
-            return Err(error_msg);
-        }
+        Err(err) => bail!(format!("Error: Could not deserialize get_likes response.\n{}", err)),
     };
 
     // Extract data from wrapper
@@ -40,13 +35,13 @@ where
         Success(data) => Ok(data),
         Failure(data) => {
             let ErrorData { status, message } = data.error;
-            let error_msg = format!("Error from Spotify: {} - \"{}\"", status, message);
-            return Err(error_msg);
+
+            bail!(format!("Error from Spotify: {} - \"{}\"", status, message))
         }
     };
 }
 
-pub async fn pull_liked_tracks(access_token: &str) -> Result<BackupData, String> {
+pub async fn pull_liked_tracks(access_token: &str) -> Result<BackupData> {
     let mut filtered_data: BackupData = vec![];
 
     let limit = 50;
@@ -85,7 +80,7 @@ pub async fn pull_liked_tracks(access_token: &str) -> Result<BackupData, String>
     Ok(filtered_data)
 }
 
-pub async fn pull_albums(access_token: &str) -> Result<BackupData, String> {
+pub async fn pull_albums(access_token: &str) -> Result<BackupData> {
     let mut filtered_data: BackupData = vec![];
 
     let limit = 50;
@@ -124,7 +119,7 @@ pub async fn pull_albums(access_token: &str) -> Result<BackupData, String> {
     Ok(filtered_data)
 }
 
-pub async fn pull_playlists(access_token: &str) -> Result<Vec<ReducedPlaylistMetadata>, String> {
+pub async fn pull_playlists(access_token: &str) -> Result<Vec<ReducedPlaylistMetadata>> {
     let mut filtered_data: Vec<ReducedPlaylistMetadata> = vec![];
 
     let limit = 50;
@@ -169,7 +164,7 @@ pub async fn pull_playlists(access_token: &str) -> Result<Vec<ReducedPlaylistMet
     Ok(filtered_data)
 }
 
-pub async fn pull_playlist_tracks(access_token: &str, playlist_id: &str) -> Result<Vec<ReducedTrack>, String> {
+pub async fn pull_playlist_tracks(access_token: &str, playlist_id: &str) -> Result<Vec<ReducedTrack>> {
     let mut filtered_data: Vec<ReducedTrack> = vec![];
 
     let limit = 50;
@@ -180,27 +175,21 @@ pub async fn pull_playlist_tracks(access_token: &str, playlist_id: &str) -> Resu
         // Make a request for the user's albums
         let res = match get_playlist_data(playlist_id, access_token, limit, offset).await {
             Ok(val) => val,
-            Err(err) => {
-                let error_msg = format!("Error in Reqwest: {}", err);
-                return Err(error_msg);
-            }
+            Err(err) => bail!(format!("Error in Reqwest: {}", err)),
         };
 
         // Deserialize the response
         let json_res: SpotifyResponse<PlaylistTracksData> = match res.json().await {
             Ok(val) => val,
-            Err(err) => {
-                let error_msg = format!("Error: Could not deserialize get_playlists response.\n{}", err);
-                return Err(error_msg);
-            }
+            Err(err) => bail!(format!("Error: Could not deserialize get_playlists response.\n{}", err)),
         };
         // Extract data from wrapper
         let response_data: SpotifyData<PlaylistTracksData> = match json_res {
             Success(data) => data,
             Failure(data) => {
                 let ErrorData { status, message } = data.error;
-                let error_msg = format!("Error from Spotify: {} - \"{}\"", status, message);
-                return Err(error_msg);
+
+                bail!(format!("Error from Spotify: {} - \"{}\"", status, message))
             }
         };
 

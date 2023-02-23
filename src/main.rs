@@ -66,7 +66,7 @@ async fn main() {
                         Err(msg) => push_print(LogType::Error(msg.to_owned()), &mut logs),
                     },
 
-                    Err(e) => push_print(LogType::Error(e.to_owned()), &mut logs),
+                    Err(e) => push_print(LogType::Error(e.to_string()), &mut logs),
                 };
             }
 
@@ -78,7 +78,7 @@ async fn main() {
                         Err(msg) => push_print(LogType::Error(msg.to_owned()), &mut logs),
                     },
 
-                    Err(e) => push_print(LogType::Error(e.to_owned()), &mut logs),
+                    Err(e) => push_print(LogType::Error(e.to_string()), &mut logs),
                 }
             }
 
@@ -117,7 +117,7 @@ async fn main() {
                         }
                     }
 
-                    Err(msg) => push_print(LogType::Error(msg.to_owned()), &mut logs),
+                    Err(msg) => push_print(LogType::Error(msg.to_string()), &mut logs),
                 };
             }
         }
