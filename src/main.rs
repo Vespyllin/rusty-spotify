@@ -63,7 +63,7 @@ async fn main() {
                 match pull_liked_tracks(access_token).await {
                     Ok(val) => match dump_data("./tracks", &val) {
                         Ok(msg) => push_print(LogType::Completed(msg.to_owned()), &mut logs),
-                        Err(msg) => push_print(LogType::Error(msg.to_owned()), &mut logs),
+                        Err(msg) => push_print(LogType::Error(msg.to_string()), &mut logs),
                     },
 
                     Err(e) => push_print(LogType::Error(e.to_string()), &mut logs),
@@ -75,7 +75,7 @@ async fn main() {
                 match pull_albums(access_token).await {
                     Ok(val) => match dump_data("./albums", &val) {
                         Ok(msg) => push_print(LogType::Completed(msg.to_owned()), &mut logs),
-                        Err(msg) => push_print(LogType::Error(msg.to_owned()), &mut logs),
+                        Err(msg) => push_print(LogType::Error(msg.to_string()), &mut logs),
                     },
 
                     Err(e) => push_print(LogType::Error(e.to_string()), &mut logs),
@@ -113,7 +113,7 @@ async fn main() {
 
                         match dump_data("./playlists", &playlists_backup) {
                             Ok(msg) => push_print(LogType::Completed(msg.to_owned()), &mut logs),
-                            Err(msg) => push_print(LogType::Error(msg.to_owned()), &mut logs),
+                            Err(msg) => push_print(LogType::Error(msg.to_string()), &mut logs),
                         }
                     }
 

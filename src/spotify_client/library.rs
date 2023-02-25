@@ -9,7 +9,7 @@ pub async fn get_liked_tracks(access_token: String, limit: u64, offset: u64) -> 
     let req_url = format!("{}/tracks", SPOTIFY_LIBRARY_URL);
     let params = [("limit", limit.to_string()), ("offset", offset.to_string())];
 
-    return client
+    client
         .get(req_url)
         .query(&params)
         .header("Authorization", format!("Bearer {}", access_token))
@@ -17,7 +17,7 @@ pub async fn get_liked_tracks(access_token: String, limit: u64, offset: u64) -> 
         .header("Content-Type", "application/json")
         .send()
         .await
-        .map_err(anyhow::Error::msg);
+        .map_err(anyhow::Error::msg)
 }
 
 pub async fn get_saved_albums(access_token: String, limit: u64, offset: u64) -> Result<Response> {
@@ -26,7 +26,7 @@ pub async fn get_saved_albums(access_token: String, limit: u64, offset: u64) -> 
     let req_url = format!("{}/albums", SPOTIFY_LIBRARY_URL);
     let params = [("limit", limit.to_string()), ("offset", offset.to_string())];
 
-    return client
+    client
         .get(req_url)
         .query(&params)
         .header("Authorization", format!("Bearer {}", access_token))
@@ -34,7 +34,7 @@ pub async fn get_saved_albums(access_token: String, limit: u64, offset: u64) -> 
         .header("Content-Type", "application/json")
         .send()
         .await
-        .map_err(anyhow::Error::msg);
+        .map_err(anyhow::Error::msg)
 }
 
 pub async fn get_playlists(access_token: String, limit: u64, offset: u64) -> Result<Response> {
@@ -43,7 +43,7 @@ pub async fn get_playlists(access_token: String, limit: u64, offset: u64) -> Res
     let req_url = format!("{}/playlists", SPOTIFY_LIBRARY_URL);
     let params = [("limit", limit.to_string()), ("offset", offset.to_string())];
 
-    return client
+    client
         .get(req_url)
         .query(&params)
         .header("Authorization", format!("Bearer {}", access_token))
@@ -51,5 +51,5 @@ pub async fn get_playlists(access_token: String, limit: u64, offset: u64) -> Res
         .header("Content-Type", "application/json")
         .send()
         .await
-        .map_err(anyhow::Error::msg);
+        .map_err(anyhow::Error::msg)
 }
