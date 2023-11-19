@@ -1,17 +1,14 @@
 [package]
-name = "rusty-spotify"
+name = "spotify_cli"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.69"
-crossterm = "0.26.0"
-reqwest = { version = "0.11", features = ["json"] }
-serde = {version = "1.0.152", features = ["derive"]}
+anyhow = "1.0.75"
+crossterm = "0.27.0"
+reqwest = "0.11.22"
+serde = {version = "1.0.192", features = ["derive"]}
 serde_json = "1.0.93"
-sha2 = "0.10.6"
-thiserror = "1.0.38"
-tokio = { version = "1.25", features = ["full"] }
-uuid = { version = "1.3.0", features = ["v4", "fast-rng", "macro-diagnostics"] }
+tokio = {version = "1.34.0", features = ["full"] }

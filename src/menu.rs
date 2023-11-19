@@ -1,33 +1,25 @@
-use std::{io::stdout, process::Command};
+use std::{
+    io::stdout,
+    process::{exit, Command},
+};
 
 use crossterm::{
-    cursor, execute,
+    // cursor,
+    event::{read, Event, KeyCode, KeyEvent, KeyModifiers},
+    execute,
     style::Print,
     terminal::{disable_raw_mode, enable_raw_mode, is_raw_mode_enabled},
 };
 
-pub mod backup;
-pub mod log;
-pub mod main;
-
-pub enum Mode {
-    Backup,
-    Recover,
-}
-
 pub enum Choice {
-    Option(usize),
+    Option(char),
     Exit,
     Submit,
     Default,
 }
 
-const WIDTH: usize = 85;
+pub const MENU_WIDTH: usize = 85;
 const FILLER_CHAR: char = '=';
-
-pub fn reset_cursor() {
-    execute!(stdout(), cursor::MoveTo(0, 0)).expect("Could not reset cursor");
-}
 
 pub fn cls() {
     if cfg!(windows) {
@@ -38,7 +30,7 @@ pub fn cls() {
 }
 
 pub fn sep() {
-    let sep = (0..WIDTH).map(|_| FILLER_CHAR).collect::<String>();
+    let sep = (0..MENU_WIDTH).map(|_| FILLER_CHAR).collect::<String>();
     println!("{}", sep);
 }
 
@@ -54,6 +46,48 @@ pub fn reset_terminal() {
     disable_raw_mode().expect("reset raw 2");
 }
 
-pub fn hide_cursor() {
+pub fn teardown() -> ! {
+    cls();
+    reset_terminal();
+    exit(1)
+}
+
+pub fn setup() {
     execute!(stdout(), crossterm::cursor::Hide).unwrap();
+    cls();
+
+    // Discard resize event on Windows
+    if cfg!(windows) {
+        _ = read().expect("failed to read input. main");
+    }
+}
+
+pub fn handle_input() -> Choice {
+    enable_raw_mode().expect("Could not enable raw mode. main_menu::handle_input");
+
+    let input = read().expect("failed to read input. main_menu::handle_input");
+    let choice = match input {
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('c'),
+            modifiers: KeyModifiers::CONTROL,
+            ..
+        }) => Choice::Exit,
+
+        Event::Key(KeyEvent { code: KeyCode::Char('q'), .. }) => Choice::Exit,
+
+        Event::Key(KeyEvent { code: KeyCode::Enter, .. }) => Choice::Submit,
+
+        Event::Key(KeyEvent { code: KeyCode::Char(x), .. }) => Choice::Option(x),
+
+        _ => Choice::Default,
+    };
+
+    // Double input workaround for Windows
+    if cfg!(windows) {
+        _ = read().expect("failed to read input. menu::handle_input");
+    }
+
+    disable_raw_mode().expect("Could not disable raw mode. menu::handle_input");
+
+    choice
 }
